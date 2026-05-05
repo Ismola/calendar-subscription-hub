@@ -1,44 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Calendar Subscription Hub
 
-## Tutorials
+A self-hosted web application that aggregates calendar data from external providers and exposes them as standard iCalendar (`.ics`) feeds — ready to subscribe to from any calendar app (Google Calendar, Apple Calendar, Outlook, etc.).
+
+This is the official open-source frontend and backend for [asismetro-automations](https://github.com/Ismola/asismetro-automations), a project that automates schedule retrieval from Asismetro and makes it available as a subscribable calendar feed.
+
+**Public instance:** [calendar-subscription-hub.ismola.dev](https://calendar-subscription-hub.ismola.dev)
+
+## Features
+
+- **Provider integrations** — fetch schedules from third-party services (e.g. Asismetro) and convert them to iCal format
+- **Per-user subscriptions** — each user manages their own set of calendar subscriptions
+- **Background sync** — a BullMQ worker refreshes subscriptions on a configurable schedule
+- **Shareable iCal URLs** — each subscription generates a stable public URL that any calendar client can poll
+- **Session-based auth** — register, log in, and manage subscriptions through a dashboard
+
+## Demo
 
 ### Asismetro Automation
 
 https://github.com/user-attachments/assets/4716658d-8547-4c46-87fd-c2d0dfc50b83
 
+## Tech Stack
 
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Database | PostgreSQL + Prisma |
+| Queue / Cache | Redis + BullMQ |
+| Auth | Session tokens (jose + bcryptjs) |
+| Styling | Tailwind CSS v4 |
+| Runtime | Node.js 22 |
 
-## Getting Started
+## Prerequisites
 
-First, run the development server:
+- Node.js ≥ 22
+- PostgreSQL 16
+- Redis 7
+- Docker & Docker Compose (for the easy setup)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Quick Start (Docker)
+
+1. **Copy and fill in the environment file:**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | Description | Required |
+   |---|---|---|
+   | `DATABASE_URL` | PostgreSQL connection string | Yes |
+   | `DIRECT_DATABASE_URL` | Direct PostgreSQL URL (for migrations) | Yes |
+   | `REDIS_URL` | Redis connection string | No (default: `redis://redis:6379`) |
+   | `APP_BASE_URL` | Public URL of the app | Yes |
+   | `APP_ENCRYPTION_KEY` | 32-byte hex key for encrypting provider credentials | Yes |
+   | `SESSION_SECRET` | Secret used to sign session tokens | Yes |
+   | `ASISMETRO_BEARER_TOKEN` | Bearer token for the Asismetro Automations API | Yes |
+   | `DEFAULT_REFRESH_MINUTES` | Subscription sync interval in minutes | No (default: `60`) |
+
+2. **Start all services:**
+
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d
+   ```
+
+   This starts PostgreSQL, Redis, runs database migrations, and launches the web app and the background worker.
+
+3. Open [http://localhost:3000](http://localhost:3000) and create an account.
+
+## Local Development
+
+1. Start the infrastructure (database + Redis):
+
+   ```bash
+   docker compose up -d
+   ```
+
+2. Install dependencies and run migrations:
+
+   ```bash
+   npm install
+   npm run prisma:migrate:dev
+   ```
+
+3. Start the development server and the background worker in separate terminals:
+
+   ```bash
+   npm run dev          # Next.js dev server on :3000
+   npm run dev:worker   # BullMQ worker with hot-reload
+   ```
+
+## Project Structure
+
+```
+src/
+├── app/               # Next.js App Router pages and API routes
+│   ├── [guid]/        # Public iCal feed endpoint
+│   ├── api/           # REST API (auth, subscriptions, providers, events)
+│   └── dashboard/     # Authenticated dashboard pages
+├── components/        # Shared React components
+├── lib/
+│   ├── auth/          # Session and password utilities
+│   ├── ics/           # iCalendar parser
+│   ├── providers/     # Provider definitions and registry
+│   ├── queue/         # BullMQ client helpers
+│   └── subscriptions/ # Subscription service logic
+└── worker/            # Background sync worker entry point
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Adding a Provider
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Create a new file under `src/lib/providers/my-provider.ts` exporting a `ProviderDefinition`.
+2. Register it in `src/lib/providers/registry.ts`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```ts
+   import { myProvider } from "./my-provider";
+   registry.push(myProvider);
+   ```
 
-## Learn More
+## Available Scripts
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Description |
+|---|---|
+| `npm run dev` | Start Next.js in development mode |
+| `npm run dev:worker` | Start the BullMQ worker with hot-reload |
+| `npm run build` | Build for production (includes `prisma generate`) |
+| `npm run start` | Start the production server |
+| `npm run start:worker` | Start the production worker |
+| `npm run prisma:migrate:dev` | Create and apply a new migration |
+| `npm run prisma:migrate:deploy` | Apply pending migrations (production) |
+| `npm run lint` | Run ESLint |
