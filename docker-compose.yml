@@ -15,8 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    networks:
-      - cloudflare_default
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -27,8 +26,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    networks:
-      - cloudflare_default
+
   migrate:
     image: node:22-alpine
     working_dir: /app
@@ -41,8 +39,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - cloudflare_default
+
   web:
     build:
       context: .
@@ -65,8 +62,7 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    networks:
-      - cloudflare_default
+
   worker:
     build:
       context: .
@@ -85,12 +81,6 @@ services:
       redis:
         condition: service_healthy
 
-    networks:
-      - cloudflare_default
-
-networks:
-  cloudflare_default:
-    external: true
 
 volumes:
   postgres_data:
