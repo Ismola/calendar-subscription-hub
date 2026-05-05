@@ -34,7 +34,10 @@ export async function createSubscription(
         throw new Error(`Unknown or disabled provider: ${input.providerKey}`);
     }
 
-    await provider.validateConfig(input.config);
+    await provider.validateConfig({
+        ...input.config,
+        ...(input.secretConfig ?? {}),
+    });
 
     // Encrypt secret config if provided
     let encryptedSecretConfig: string | null = null;

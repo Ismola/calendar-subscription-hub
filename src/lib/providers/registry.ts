@@ -1,3 +1,4 @@
+import { asismetroAutomationsProvider } from "./asismetro-automations";
 import type { ProviderDefinition } from "./types";
 
 /**
@@ -9,10 +10,7 @@ import type { ProviderDefinition } from "./types";
  *   registry.push(myProvider);
  */
 const registry: ProviderDefinition[] = [
-    // No providers registered yet.
-    // Add future providers here, e.g.:
-    // googleCalendarProvider,
-    // caldavProvider,
+    asismetroAutomationsProvider,
 ];
 
 export function getProviders(): ProviderDefinition[] {
