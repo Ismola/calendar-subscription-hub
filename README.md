@@ -2,7 +2,11 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Tutorials
 
-- [Asismetro Automation tutorial](docs/Asismetro%20automation.MP4)
+### Asismetro Automation
+
+https://github.com/user-attachments/assets/4716658d-8547-4c46-87fd-c2d0dfc50b83
+
+
 
 ## Getting Started
 
