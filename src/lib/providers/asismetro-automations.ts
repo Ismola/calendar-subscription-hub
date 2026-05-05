@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { z } from "zod";
+import { env } from "../env";
 import type { ProviderDefinition } from "./types";
 
 const ASISMETRO_CALENDAR_URL =
@@ -369,6 +370,7 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
             method: "GET",
             headers: {
                 Accept: "application/json",
+                Authorization: `Bearer ${env.asismetroBearerToken()}`,
             },
             signal: AbortSignal.timeout(30000),
         });

@@ -56,6 +56,7 @@ services:
       APP_BASE_URL: ${APP_BASE_URL}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
+      ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN}
       DEFAULT_REFRESH_MINUTES: ${DEFAULT_REFRESH_MINUTES:-60}
     depends_on:
       migrate:
@@ -74,13 +75,13 @@ services:
       APP_BASE_URL: ${APP_BASE_URL}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
+      ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN}
       DEFAULT_REFRESH_MINUTES: ${DEFAULT_REFRESH_MINUTES:-60}
     depends_on:
       migrate:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-
 
 volumes:
   postgres_data:

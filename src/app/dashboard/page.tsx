@@ -14,8 +14,19 @@ interface Subscription {
     lastSuccessfulSyncAt: string | null;
     nextRefreshAt: string | null;
     lastError: string | null;
-    createdAt: string;
     icsUrl: string;
+}
+
+interface CalendarEvent {
+    id: string;
+    subscriptionId: string;
+    subscriptionName: string;
+    providerName: string;
+    title: string;
+    description: string;
+    startsAt: string;
+    endsAt: string | null;
+    allDay: boolean;
 }
 
 type ViewMode = "list" | "calendar";
@@ -29,12 +40,23 @@ function toDateKey(date: Date) {
     return `${year}-${month}-${day}`;
 }
 
-function getScheduleDate(subscription: Subscription) {
-    const source =
-        subscription.nextRefreshAt ??
-        subscription.lastSuccessfulSyncAt ??
-        subscription.createdAt;
-    return new Date(source);
+function getEventDateKeys(event: CalendarEvent): string[] {
+    const start = new Date(event.startsAt);
+    const end = event.endsAt ? new Date(event.endsAt) : new Date(event.startsAt);
+
+    const cursor = new Date(start);
+    cursor.setHours(0, 0, 0, 0);
+
+    const endDay = new Date(end);
+    endDay.setHours(0, 0, 0, 0);
+
+    const dateKeys: string[] = [];
+    while (cursor <= endDay) {
+        dateKeys.push(toDateKey(cursor));
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return dateKeys;
 }
 
 function getMonthGrid(monthBase: Date) {
@@ -66,7 +88,9 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function DashboardPage() {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+    const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
+    const [calendarLoading, setCalendarLoading] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [view, setView] = useState<ViewMode>("list");
     const [monthCursor, setMonthCursor] = useState(() => {
@@ -82,25 +106,50 @@ export default function DashboardPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const subscriptionsByDay = useMemo(() => {
-        const grouped = new Map<string, Subscription[]>();
+    useEffect(() => {
+        if (view !== "calendar") return;
 
-        for (const subscription of subscriptions) {
-            const dateKey = toDateKey(getScheduleDate(subscription));
-            const existing = grouped.get(dateKey) ?? [];
-            existing.push(subscription);
-            grouped.set(dateKey, existing);
+        const monthDays = getMonthGrid(monthCursor);
+        const firstDay = new Date(monthDays[0]);
+        firstDay.setHours(0, 0, 0, 0);
+
+        const lastDay = new Date(monthDays[monthDays.length - 1]);
+        lastDay.setHours(23, 59, 59, 999);
+
+        fetch(
+            `/api/calendar/events?start=${encodeURIComponent(
+                firstDay.toISOString()
+            )}&end=${encodeURIComponent(lastDay.toISOString())}`
+        )
+            .then((r) => r.json())
+            .then((d) => setCalendarEvents(d.events ?? []))
+            .finally(() => setCalendarLoading(false));
+    }, [monthCursor, view]);
+
+    const eventsByDay = useMemo(() => {
+        const grouped = new Map<string, CalendarEvent[]>();
+
+        for (const event of calendarEvents) {
+            for (const dateKey of getEventDateKeys(event)) {
+                const existing = grouped.get(dateKey) ?? [];
+                existing.push(event);
+                grouped.set(dateKey, existing);
+            }
+        }
+
+        for (const dayEvents of grouped.values()) {
+            dayEvents.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
         }
 
         return grouped;
-    }, [subscriptions]);
+    }, [calendarEvents]);
 
     const monthDays = useMemo(() => getMonthGrid(monthCursor), [monthCursor]);
 
-    const selectedDaySubscriptions = useMemo(() => {
+    const selectedDayEvents = useMemo(() => {
         if (!selectedDayKey) return [];
-        return subscriptionsByDay.get(selectedDayKey) ?? [];
-    }, [selectedDayKey, subscriptionsByDay]);
+        return eventsByDay.get(selectedDayKey) ?? [];
+    }, [selectedDayKey, eventsByDay]);
 
     const monthLabel = useMemo(
         () =>
@@ -128,6 +177,7 @@ export default function DashboardPage() {
     }
 
     function moveMonth(step: number) {
+        setCalendarLoading(true);
         setMonthCursor(
             (prev) => new Date(prev.getFullYear(), prev.getMonth() + step, 1)
         );
@@ -161,7 +211,10 @@ export default function DashboardPage() {
                             List
                         </button>
                         <button
-                            onClick={() => setView("calendar")}
+                            onClick={() => {
+                                setCalendarLoading(true);
+                                setView("calendar");
+                            }}
                             className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                                 view === "calendar"
                                     ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
@@ -281,7 +334,7 @@ export default function DashboardPage() {
                             {monthDays.map((day) => {
                                 const dayKey = toDateKey(day);
                                 const inCurrentMonth = day.getMonth() === monthCursor.getMonth();
-                                const daySubscriptions = subscriptionsByDay.get(dayKey) ?? [];
+                                const dayEvents = eventsByDay.get(dayKey) ?? [];
                                 const isSelected = selectedDayKey === dayKey;
 
                                 return (
@@ -300,17 +353,17 @@ export default function DashboardPage() {
                                     >
                                         <div className="mb-1 text-xs font-medium">{day.getDate()}</div>
                                         <div className="space-y-1">
-                                            {daySubscriptions.slice(0, 2).map((sub) => (
+                                            {dayEvents.slice(0, 2).map((event) => (
                                                 <div
-                                                    key={sub.id}
+                                                    key={event.id}
                                                     className="truncate rounded bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-700 dark:text-zinc-300"
                                                 >
-                                                    {sub.name}
+                                                    {event.title}
                                                 </div>
                                             ))}
-                                            {daySubscriptions.length > 2 && (
+                                            {dayEvents.length > 2 && (
                                                 <div className="text-[10px] text-zinc-500 dark:text-zinc-400 px-1">
-                                                    +{daySubscriptions.length - 2} more
+                                                    +{dayEvents.length - 2} more
                                                 </div>
                                             )}
                                         </div>
@@ -321,37 +374,54 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+                        {calendarLoading && (
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
+                                Loading events...
+                            </p>
+                        )}
                         {selectedDayKey ? (
-                            selectedDaySubscriptions.length > 0 ? (
+                            selectedDayEvents.length > 0 ? (
                                 <div className="space-y-3">
                                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                                        Calendars on {selectedDayKey}
+                                        Events on {selectedDayKey}
                                     </p>
-                                    {selectedDaySubscriptions.map((sub) => (
+                                    {selectedDayEvents.map((event) => (
                                         <div
-                                            key={sub.id}
+                                            key={event.id}
                                             className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 dark:border-zinc-800 px-3 py-2"
                                         >
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                    {sub.name}
+                                                    {event.title}
                                                 </p>
                                                 <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                                                    {sub.providerName}
+                                                    {event.subscriptionName} · {event.providerName}
                                                 </p>
+                                                {event.description && (
+                                                    <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
+                                                        {event.description}
+                                                    </p>
+                                                )}
                                             </div>
-                                            <StatusBadge status={sub.status} />
+                                            <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                                                {event.allDay
+                                                    ? "All day"
+                                                    : new Intl.DateTimeFormat("en-US", {
+                                                          hour: "2-digit",
+                                                          minute: "2-digit",
+                                                      }).format(new Date(event.startsAt))}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
                                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                    No calendars scheduled for {selectedDayKey}.
+                                    No events for {selectedDayKey}.
                                 </p>
                             )
                         ) : (
                             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                Select a day to inspect the calendars for that date.
+                                Select a day to inspect events synced from your providers.
                             </p>
                         )}
                     </div>

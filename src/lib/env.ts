@@ -10,6 +10,7 @@ export const env = {
     appBaseUrl: () => process.env.APP_BASE_URL ?? "http://localhost:3000",
     encryptionKey: () => required("APP_ENCRYPTION_KEY"),
     sessionSecret: () => required("SESSION_SECRET"),
+    asismetroBearerToken: () => required("ASISMETRO_BEARER_TOKEN"),
     defaultRefreshMinutes: () =>
         parseInt(process.env.DEFAULT_REFRESH_MINUTES ?? "60", 10),
 };
