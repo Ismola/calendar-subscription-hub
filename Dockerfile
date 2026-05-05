@@ -5,6 +5,7 @@ RUN apk add --no-cache libc6-compat
 # ── deps ───────────────────────────────────────────────────────────────────────
 FROM base AS deps
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 
 # ── builder ────────────────────────────────────────────────────────────────────
