@@ -361,16 +361,15 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
             ...secretConfig,
         });
 
-        const response = await fetch(ASISMETRO_CALENDAR_URL, {
-            method: "POST",
+        const requestUrl = new URL(ASISMETRO_CALENDAR_URL);
+        requestUrl.searchParams.set("username", parsedConfig.username);
+        requestUrl.searchParams.set("password", parsedConfig.password);
+
+        const response = await fetch(requestUrl, {
+            method: "GET",
             headers: {
-                "Content-Type": "application/json",
                 Accept: "application/json",
             },
-            body: JSON.stringify({
-                username: parsedConfig.username,
-                password: parsedConfig.password,
-            }),
             signal: AbortSignal.timeout(30000),
         });
 
