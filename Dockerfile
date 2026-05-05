@@ -14,6 +14,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
+# ── migrate ───────────────────────────────────────────────────────────────────
+FROM base AS migrate
+COPY --from=deps /app/node_modules ./node_modules
+COPY prisma ./prisma
+CMD ["npx", "prisma", "migrate", "deploy"]
+
 # ── runner (web) ───────────────────────────────────────────────────────────────
 FROM base AS runner
 ENV NODE_ENV=production
