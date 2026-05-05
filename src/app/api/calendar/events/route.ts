@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
                 subscriptionId: subscription.id,
                 subscriptionName: subscription.name,
                 providerName: subscription.providerDefinition.name,
-                title: event.summary,
+                title: `${subscription.name} - ${event.summary}`,
                 description: event.description,
                 startsAt: event.startsAt.toISOString(),
                 endsAt: event.endsAt?.toISOString() ?? null,
