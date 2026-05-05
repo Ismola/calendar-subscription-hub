@@ -2,8 +2,8 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -15,7 +15,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
+    networks:
+      - cloudflare_default
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -26,6 +27,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - cloudflare_default
 
   migrate:
     build:
@@ -37,14 +40,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - cloudflare_default
 
   web:
     build:
       context: .
       target: runner
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -60,7 +65,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-
+    networks:
+      - cloudflare_default
   worker:
     build:
       context: .
@@ -78,7 +84,13 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+    networks:
+      - cloudflare_default
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  cloudflare_default:
+    external: true
