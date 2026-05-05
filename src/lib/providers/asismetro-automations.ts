@@ -38,7 +38,7 @@ const apiResponseSchema = z.object({
                                         assignees: z
                                             .array(
                                                 z.object({
-                                                    name: z.string(),
+                                                    name: z.string().nullable(),
                                                 })
                                             )
                                             .default([]),
@@ -64,7 +64,7 @@ const apiResponseSchema = z.object({
                                         assignees: z
                                             .array(
                                                 z.object({
-                                                    name: z.string(),
+                                                    name: z.string().nullable(),
                                                 })
                                             )
                                             .default([]),
@@ -277,8 +277,10 @@ function extractEvents(
                     continue;
                 }
 
-                const isAssignedToProfile = entry.assignees.some((assignee) =>
-                    namesMatch(assignee.name, profileName)
+                const isAssignedToProfile = entry.assignees.some(
+                    (assignee) =>
+                        assignee.name !== null &&
+                        namesMatch(assignee.name, profileName)
                 );
                 if (!isAssignedToProfile) {
                     continue;
