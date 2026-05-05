@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    container_name: postgres-calendar_subscription_hub
     expose:
       - "5432"
     environment:
@@ -18,6 +19,7 @@ services:
     networks:
       - cloudflare_default
   redis:
+    container_name: redis-calendar_subscription_hub
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
@@ -31,6 +33,7 @@ services:
       - cloudflare_default
 
   migrate:
+    container_name: migrate-calendar_subscription_hub
     build:
       context: .
       target: migrate
@@ -44,6 +47,7 @@ services:
       - cloudflare_default
 
   web:
+    container_name: web-calendar_subscription_hub
     build:
       context: .
       target: runner
@@ -68,6 +72,7 @@ services:
     networks:
       - cloudflare_default
   worker:
+    container_name: worker-calendar_subscription_hub
     build:
       context: .
       target: worker
