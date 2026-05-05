@@ -1,0 +1,42 @@
+{
+  "name": "calendar-subscription-hub",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:worker": "tsx watch src/worker/index.ts",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "start:worker": "node --import tsx src/worker/index.ts",
+    "lint": "eslint .",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.8.2",
+    "bcryptjs": "^3.0.2",
+    "bullmq": "^5.53.1",
+    "ioredis": "^5.8.2",
+    "jose": "^6.1.0",
+    "next": "16.2.4",
+    "nanoid": "^5.1.5",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "prisma": "^6.8.2",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.6",
+    "typescript": "^5"
+  }
+}

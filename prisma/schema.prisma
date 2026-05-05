@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  ERROR
+  DISABLED
+}
+
+enum SyncStatus {
+  IDLE
+  RUNNING
+  SUCCESS
+  ERROR
+}
+
+model User {
+  id             String                 @id @default(cuid())
+  email          String                 @unique
+  passwordHash   String
+  displayName    String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  sessions       Session[]
+  subscriptions  CalendarSubscription[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  tokenHash    String   @unique
+  userId       String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model ProviderDefinition {
+  id                    String                 @id @default(cuid())
+  key                   String                 @unique
+  name                  String
+  description           String?
+  status                String                 @default("disabled")
+  defaultRefreshMinutes Int
+  configSchema          Json
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  subscriptions         CalendarSubscription[]
+}
+
+model CalendarSubscription {
+  id                    String               @id @default(cuid())
+  publicId              String               @unique @default(uuid())
+  name                  String
+  userId                String
+  providerDefinitionId  String
+  status                SubscriptionStatus   @default(PENDING)
+  syncStatus            SyncStatus           @default(IDLE)
+  refreshIntervalMinutes Int
+  config                Json
+  secretConfig          Json?
+  lastSuccessfulSyncAt  DateTime?
+  lastAttemptedSyncAt   DateTime?
+  nextRefreshAt         DateTime?
+  lastError             String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  providerDefinition    ProviderDefinition   @relation(fields: [providerDefinitionId], references: [id], onDelete: Restrict)
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshots             CalendarSnapshot[]
+  syncAttempts          SyncAttempt[]
+
+  @@index([userId])
+  @@index([providerDefinitionId])
+  @@index([nextRefreshAt])
+}
+
+model CalendarSnapshot {
+  id               String                @id @default(cuid())
+  subscriptionId   String
+  version          Int
+  icsBody          String                @db.Text
+  sourceChecksum   String?
+  createdAt        DateTime              @default(now())
+  subscription     CalendarSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, version])
+  @@index([subscriptionId, createdAt])
+}
+
+model SyncAttempt {
+  id               String                @id @default(cuid())
+  subscriptionId   String
+  status           SyncStatus
+  message          String?
+  startedAt        DateTime              @default(now())
+  finishedAt       DateTime?
+  subscription     CalendarSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, startedAt])
+}
