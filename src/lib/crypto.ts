@@ -1,18 +1,38 @@
 /**
  * Symmetric encryption utilities for provider secret config fields.
  * Uses AES-256-GCM via the Web Crypto API (available in Node 20+ and edge runtime).
- * The APP_ENCRYPTION_KEY env var must be exactly 32 ASCII characters.
+ * APP_ENCRYPTION_KEY supports either:
+ * - a raw 32-byte string, or
+ * - a Base64-encoded value that decodes to exactly 32 bytes.
  */
 
-function keyMaterial(): ArrayBuffer {
-    const raw = process.env.APP_ENCRYPTION_KEY ?? "";
-    const bytes = new TextEncoder().encode(raw);
-    if (bytes.length !== 32)
-        throw new Error("APP_ENCRYPTION_KEY must be exactly 32 bytes");
-    // Copy into a plain ArrayBuffer so Web Crypto accepts it
+function copyAsArrayBuffer(bytes: Uint8Array): ArrayBuffer {
     const buf = new ArrayBuffer(32);
     new Uint8Array(buf).set(bytes);
     return buf;
+}
+
+function keyMaterial(): ArrayBuffer {
+    const raw = (process.env.APP_ENCRYPTION_KEY ?? "").trim();
+
+    // 1) Raw 32-byte key
+    const rawBytes = new TextEncoder().encode(raw);
+    if (rawBytes.length === 32) {
+        return copyAsArrayBuffer(rawBytes);
+    }
+
+    // 2) Base64 key that decodes to 32 bytes
+    const decoded = Buffer.from(raw, "base64");
+    const normalizedInput = raw.replace(/=+$/, "");
+    const normalizedDecoded = decoded.toString("base64").replace(/=+$/, "");
+
+    if (decoded.length === 32 && normalizedDecoded === normalizedInput) {
+        return copyAsArrayBuffer(decoded);
+    }
+
+    throw new Error(
+        "APP_ENCRYPTION_KEY must be 32 raw bytes or Base64 for 32 bytes"
+    );
 }
 
 async function importKey(): Promise<CryptoKey> {
