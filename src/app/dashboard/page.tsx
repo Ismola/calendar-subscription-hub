@@ -92,6 +92,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [calendarLoading, setCalendarLoading] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [refreshingIds, setRefreshingIds] = useState<Record<string, boolean>>({});
     const [view, setView] = useState<ViewMode>("list");
     const [monthCursor, setMonthCursor] = useState(() => {
         const now = new Date();
@@ -167,7 +168,12 @@ export default function DashboardPage() {
     }
 
     async function handleRefresh(id: string) {
-        await fetch(`/api/subscriptions/${id}/refresh`, { method: "POST" });
+        setRefreshingIds((prev) => ({ ...prev, [id]: true }));
+        try {
+            await fetch(`/api/subscriptions/${id}/refresh`, { method: "POST" });
+        } finally {
+            setRefreshingIds((prev) => ({ ...prev, [id]: false }));
+        }
     }
 
     async function copyUrl(id: string, url: string) {
@@ -284,10 +290,13 @@ export default function DashboardPage() {
                                 <div className="flex items-center gap-2 shrink-0">
                                     <button
                                         onClick={() => handleRefresh(sub.id)}
-                                        title="Force refresh"
-                                        className="text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                                        disabled={Boolean(refreshingIds[sub.id])}
+                                        title={refreshingIds[sub.id] ? "Refreshing..." : "Force refresh"}
+                                        className="text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        ↻
+                                        <span className={refreshingIds[sub.id] ? "inline-block animate-spin" : "inline-block"}>
+                                            ↻
+                                        </span>
                                     </button>
                                     <button
                                         onClick={() => handleDelete(sub.id)}

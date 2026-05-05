@@ -3,6 +3,9 @@ import { z } from "zod";
 import { env } from "../env";
 import type { ProviderDefinition } from "./types";
 
+
+// DOCUMENTATION https://github.com/Ismola/asismetro-automations/blob/main/API_REFERENCE.md
+
 const ASISMETRO_CALENDAR_URL =
     "https://asismetro-automations.ismola.dev/get-calendar";
 const CALENDAR_TIMEZONE = "Europe/Madrid";
@@ -362,16 +365,17 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
             ...secretConfig,
         });
 
-        const requestUrl = new URL(ASISMETRO_CALENDAR_URL);
-        requestUrl.searchParams.set("username", parsedConfig.username);
-        requestUrl.searchParams.set("password", parsedConfig.password);
-
-        const response = await fetch(requestUrl, {
-            method: "GET",
+        const response = await fetch(ASISMETRO_CALENDAR_URL, {
+            method: "POST",
             headers: {
                 Accept: "application/json",
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${env.asismetroBearerToken()}`,
             },
+            body: JSON.stringify({
+                username: parsedConfig.username,
+                password: parsedConfig.password,
+            }),
             signal: AbortSignal.timeout(30000),
         });
 
