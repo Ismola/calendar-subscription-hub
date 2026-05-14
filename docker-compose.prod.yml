@@ -1,13 +1,10 @@
 services:
   asismetro-automations:
-    image: ghcr.io/ismola/asismetro-automations:latest
+    image: ghcr.io/ismola/asismetro-automations:main
     container_name: asismetro-automations
     restart: unless-stopped
     expose:
       - "3000"
-    volumes:
-      - ./logs:/app/logs
-      - ./temp_downloads:/app/temp_downloads
     environment:
       TZ: ${TZ:-Europe/Madrid}
       STAGE: ${STAGE:-production}
