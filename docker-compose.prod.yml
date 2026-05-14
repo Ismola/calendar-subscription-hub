@@ -1,6 +1,6 @@
 services:
   asismetro-automations:
-    image: ghcr.io/ismola/asismetro-automations:sha256-992dd443546771d66b638034adfdd53ac86474d42cec2f14ab90477bc9b48e0b
+    image: ghcr.io/ismola/asismetro-automations:latest
     container_name: asismetro-automations
     restart: unless-stopped
     expose:
