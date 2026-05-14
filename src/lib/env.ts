@@ -4,6 +4,14 @@ function required(name: string): string {
     return val;
 }
 
+function positiveInt(name: string, fallback: number): number {
+    const raw = process.env[name];
+    if (!raw) return fallback;
+    const parsed = Number.parseInt(raw, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+    return parsed;
+}
+
 export const env = {
     databaseUrl: () => required("DATABASE_URL"),
     redisUrl: () => process.env.REDIS_URL ?? "redis://localhost:6379",
@@ -14,6 +22,6 @@ export const env = {
     encryptionKey: () => required("APP_ENCRYPTION_KEY"),
     sessionSecret: () => required("SESSION_SECRET"),
     asismetroBearerToken: () => required("ASISMETRO_BEARER_TOKEN"),
-    defaultRefreshMinutes: () =>
-        parseInt(process.env.DEFAULT_REFRESH_MINUTES ?? "60", 10),
+    defaultRefreshMinutes: () => positiveInt("DEFAULT_REFRESH_MINUTES", 60),
+    asismetroMinSyncHours: () => positiveInt("ASISMETRO_MIN_SYNC_HOURS", 4),
 };

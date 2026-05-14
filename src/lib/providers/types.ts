@@ -36,6 +36,8 @@ export interface ProviderDefinition {
     enabled: boolean;
     /** Default refresh interval in minutes */
     defaultRefreshMinutes: number;
+    /** Minimum API call interval in minutes for this provider */
+    minSyncIntervalMinutes?: number;
     /** Declarative config fields rendered in the configuration form */
     fields: ProviderFieldDefinition[];
     /**

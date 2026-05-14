@@ -329,6 +329,7 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
         "Sincroniza los turnos publicados en Asismetro para una persona concreta.",
     enabled: true,
     defaultRefreshMinutes: 60,
+    minSyncIntervalMinutes: env.asismetroMinSyncHours() * 60,
     fields: [
         {
             key: "username",

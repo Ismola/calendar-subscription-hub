@@ -31,6 +31,7 @@ model User {
   updatedAt      DateTime               @updatedAt
   sessions       Session[]
   subscriptions  CalendarSubscription[]
+  syncErrors     SyncError[]
 }
 
 model Session {
@@ -80,6 +81,7 @@ model CalendarSubscription {
   user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   snapshots             CalendarSnapshot[]
   syncAttempts          SyncAttempt[]
+  syncErrors            SyncError[]
 
   @@index([userId])
   @@index([providerDefinitionId])
@@ -109,4 +111,21 @@ model SyncAttempt {
   subscription     CalendarSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId, startedAt])
+}
+
+model SyncError {
+  id               String                @id @default(cuid())
+  subscriptionId   String
+  userId           String
+  errorMessage     String                @db.Text
+  errorCode        String?
+  stackTrace       String?               @db.Text
+  createdAt        DateTime              @default(now())
+  expiresAt        DateTime
+  subscription     CalendarSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([subscriptionId, createdAt])
+  @@index([expiresAt])
 }

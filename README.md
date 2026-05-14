@@ -49,10 +49,13 @@ https://github.com/user-attachments/assets/4716658d-8547-4c46-87fd-c2d0dfc50b83
    | Variable | Description | Required |
    |---|---|---|
    | `DATABASE_URL` | PostgreSQL connection string | Yes |
+   | `DATABASE_URL_DOCKER` | PostgreSQL URL used by containers in Docker Compose | No (default: compose internal postgres service) |
    | `DIRECT_DATABASE_URL` | Direct PostgreSQL URL (for migrations) | Yes |
    | `REDIS_URL` | Redis connection string | No (default: `redis://redis:6379`) |
+   | `REDIS_URL_DOCKER` | Redis URL used by containers in Docker Compose | No (default: `redis://redis:6379`) |
    | `APP_BASE_URL` | Public URL of the app | Yes |
    | `ASISMETRO_API_BASE_URL` | Base URL for Asismetro Automations API | No (default: `https://asismetro-automations.ismola.dev`) |
+   | `ASISMETRO_MIN_SYNC_HOURS` | Minimum hours between sync calls to Asismetro | No (default: `4`) |
    | `APP_ENCRYPTION_KEY` | 32-byte hex key for encrypting provider credentials | Yes |
    | `SESSION_SECRET` | Secret used to sign session tokens | Yes |
    | `ASISMETRO_BEARER_TOKEN` | Bearer token for the Asismetro Automations API | Yes |

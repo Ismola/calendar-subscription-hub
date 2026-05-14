@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function NavBar({ displayName }: { displayName: string }) {
+export default function NavBar({ displayName, isAdmin }: { displayName: string; isAdmin: boolean }) {
     const router = useRouter();
 
     async function handleLogout() {
@@ -22,6 +22,14 @@ export default function NavBar({ displayName }: { displayName: string }) {
                     Calendar Subscription Hub
                 </Link>
                 <div className="flex items-center gap-4">
+                    {isAdmin && (
+                        <Link
+                            href="/dashboard/admin"
+                            className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors font-medium"
+                        >
+                            Admin
+                        </Link>
+                    )}
                     <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
                         {displayName}
                     </span>
