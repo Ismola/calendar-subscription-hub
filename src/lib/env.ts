@@ -10,7 +10,7 @@ export const env = {
     appBaseUrl: () => process.env.APP_BASE_URL ?? "http://localhost:3000",
     asismetroApiBaseUrl: () =>
         process.env.ASISMETRO_API_BASE_URL ??
-        "https://asismetro-automations.ismola.dev",
+        "http://asismetro-automations:3000",
     encryptionKey: () => required("APP_ENCRYPTION_KEY"),
     sessionSecret: () => required("SESSION_SECRET"),
     asismetroBearerToken: () => required("ASISMETRO_BEARER_TOKEN"),
