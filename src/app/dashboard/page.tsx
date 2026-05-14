@@ -208,11 +208,10 @@ export default function DashboardPage() {
                     <div className="inline-flex rounded-md border border-zinc-200 dark:border-zinc-700 p-0.5 bg-white dark:bg-zinc-900">
                         <button
                             onClick={() => setView("list")}
-                            className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                                view === "list"
+                            className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${view === "list"
                                     ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                                     : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            }`}
+                                }`}
                         >
                             List
                         </button>
@@ -221,11 +220,10 @@ export default function DashboardPage() {
                                 setCalendarLoading(true);
                                 setView("calendar");
                             }}
-                            className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                                view === "calendar"
+                            className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${view === "calendar"
                                     ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                                     : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            }`}
+                                }`}
                         >
                             Calendar
                         </button>
@@ -288,6 +286,13 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
+                                    <Link
+                                        href={`/dashboard/${sub.id}/edit`}
+                                        title="Edit"
+                                        className="text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                                    >
+                                        Edit
+                                    </Link>
                                     <button
                                         onClick={() => handleRefresh(sub.id)}
                                         disabled={Boolean(refreshingIds[sub.id])}
@@ -350,15 +355,13 @@ export default function DashboardPage() {
                                     <button
                                         key={dayKey}
                                         onClick={() => setSelectedDayKey(dayKey)}
-                                        className={`min-h-24 rounded-md border p-1.5 text-left transition-colors ${
-                                            isSelected
+                                        className={`min-h-24 rounded-md border p-1.5 text-left transition-colors ${isSelected
                                                 ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800"
                                                 : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                                        } ${
-                                            inCurrentMonth
+                                            } ${inCurrentMonth
                                                 ? "bg-white dark:bg-zinc-900"
                                                 : "bg-zinc-50 text-zinc-400 dark:bg-zinc-950 dark:text-zinc-600"
-                                        }`}
+                                            }`}
                                     >
                                         <div className="mb-1 text-xs font-medium">{day.getDate()}</div>
                                         <div className="space-y-1">
@@ -416,9 +419,9 @@ export default function DashboardPage() {
                                                 {event.allDay
                                                     ? "All day"
                                                     : new Intl.DateTimeFormat("en-US", {
-                                                          hour: "2-digit",
-                                                          minute: "2-digit",
-                                                      }).format(new Date(event.startsAt))}
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    }).format(new Date(event.startsAt))}
                                             </span>
                                         </div>
                                     ))}

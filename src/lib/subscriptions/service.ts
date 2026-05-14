@@ -14,6 +14,15 @@ export interface CreateSubscriptionInput {
     refreshIntervalMinutes?: number;
 }
 
+export interface UpdateSubscriptionInput {
+    id: string;
+    userId: string;
+    name?: string;
+    config?: Record<string, unknown>;
+    secretConfig?: Record<string, unknown>;
+    refreshIntervalMinutes?: number;
+}
+
 export interface SubscriptionWithProvider extends CalendarSubscription {
     providerDefinition: {
         id: string;
@@ -121,6 +130,68 @@ export async function deleteSubscription(
     userId: string
 ): Promise<void> {
     await prisma.calendarSubscription.deleteMany({ where: { id, userId } });
+}
+
+export async function updateSubscription(
+    input: UpdateSubscriptionInput
+): Promise<SubscriptionWithProvider> {
+    const existing = await prisma.calendarSubscription.findFirst({
+        where: { id: input.id, userId: input.userId },
+        include: { providerDefinition: true },
+    });
+
+    if (!existing) {
+        throw new Error("Subscription not found");
+    }
+
+    const provider = getProvider(existing.providerDefinition.key);
+    if (!provider) {
+        throw new Error(
+            `Unknown or disabled provider: ${existing.providerDefinition.key}`
+        );
+    }
+
+    const currentConfig = (existing.config ?? {}) as Record<string, unknown>;
+    const currentSecretConfig = await getDecryptedSecretConfig(existing);
+
+    const mergedConfig = {
+        ...currentConfig,
+        ...(input.config ?? {}),
+    };
+    const mergedSecretConfig = {
+        ...currentSecretConfig,
+        ...(input.secretConfig ?? {}),
+    };
+
+    await provider.validateConfig({
+        ...mergedConfig,
+        ...mergedSecretConfig,
+    });
+
+    const refreshInterval =
+        input.refreshIntervalMinutes ?? existing.refreshIntervalMinutes;
+    const nextRefreshAt = new Date(Date.now() + refreshInterval * 60 * 1000);
+
+    let encryptedSecretConfig: string | null = null;
+    if (Object.keys(mergedSecretConfig).length > 0) {
+        encryptedSecretConfig = await encrypt(JSON.stringify(mergedSecretConfig));
+    }
+
+    const updated = await prisma.calendarSubscription.update({
+        where: { id: existing.id },
+        data: {
+            name: input.name ?? existing.name,
+            refreshIntervalMinutes: refreshInterval,
+            config: mergedConfig as Prisma.InputJsonValue,
+            secretConfig: encryptedSecretConfig
+                ? ({ encrypted: encryptedSecretConfig } as Prisma.InputJsonValue)
+                : Prisma.JsonNull,
+            nextRefreshAt,
+        },
+        include: { providerDefinition: true },
+    });
+
+    return updated as SubscriptionWithProvider;
 }
 
 export async function getDecryptedSecretConfig(
