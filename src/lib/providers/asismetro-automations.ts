@@ -7,7 +7,7 @@ import type { ProviderDefinition } from "./types";
 // DOCUMENTATION https://github.com/Ismola/asismetro-automations/blob/main/API_REFERENCE.md
 
 const ASISMETRO_CALENDAR_URL =
-    "https://asismetro-automations.ismola.dev/get-calendar";
+    `${env.asismetroApiBaseUrl().replace(/\/$/, "")}/get-calendar`;
 const CALENDAR_TIMEZONE = "Europe/Madrid";
 
 const configSchema = z.object({

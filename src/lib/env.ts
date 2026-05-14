@@ -8,6 +8,9 @@ export const env = {
     databaseUrl: () => required("DATABASE_URL"),
     redisUrl: () => process.env.REDIS_URL ?? "redis://localhost:6379",
     appBaseUrl: () => process.env.APP_BASE_URL ?? "http://localhost:3000",
+    asismetroApiBaseUrl: () =>
+        process.env.ASISMETRO_API_BASE_URL ??
+        "https://asismetro-automations.ismola.dev",
     encryptionKey: () => required("APP_ENCRYPTION_KEY"),
     sessionSecret: () => required("SESSION_SECRET"),
     asismetroBearerToken: () => required("ASISMETRO_BEARER_TOKEN"),

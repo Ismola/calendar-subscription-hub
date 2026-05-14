@@ -4,7 +4,6 @@
 	"name": "calendar-subscriptoin-hub",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/base:bullseye",
-
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {
 			"version": "latest",
@@ -12,17 +11,28 @@
 			"moby": "true"
 		},
 		"ghcr.io/devcontainers/features/node:2": {}
-	}
-
+	},
+	"forwardPorts": [
+		3000,
+		3001,
+		5432,
+		6379
+	],
+	"containerEnv": {
+		"DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public",
+		"DIRECT_DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public",
+		"REDIS_URL": "redis://localhost:6379",
+		"APP_BASE_URL": "http://localhost:3000",
+		"ASISMETRO_API_BASE_URL": "http://localhost:3001"
+	},
+	"postCreateCommand": "docker compose up -d postgres redis asismetro-automations && npm ci",
+	"postStartCommand": "docker compose up -d postgres redis asismetro-automations"
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "docker --version",
-
 	// Configure tool-specific properties.
 	// "customizations": {},
-
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }

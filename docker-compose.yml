@@ -1,4 +1,31 @@
 services:
+  asismetro-automations:
+    image: ghcr.io/ismola/asismetro-automations:sha256-992dd443546771d66b638034adfdd53ac86474d42cec2f14ab90477bc9b48e0b
+    container_name: asismetro-automations
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./logs:/app/logs
+      - ./temp_downloads:/app/temp_downloads
+    environment:
+      TZ: ${TZ:-Europe/Madrid}
+      STAGE: ${STAGE:-production}
+      VALID_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
+      AUTO_DELETE_LOGS: ${AUTO_DELETE_LOGS:-True}
+      HEADLESS_MODE: ${HEADLESS_MODE:-auto}
+      BROWSER_LANGUAGE: ${BROWSER_LANGUAGE:-en}
+      DOWNLOAD_DIR: ${DOWNLOAD_DIR:-temp_downloads}
+      PAGE_MAX_TIMEOUT: ${PAGE_MAX_TIMEOUT:-7}
+      DOWNLOAD_MAX_TIMEOUT: ${DOWNLOAD_MAX_TIMEOUT:-4}
+      BASE_URL: ${BASE_URL:-https://www.google.com/}
+    healthcheck:
+      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -19,6 +46,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -54,6 +83,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       APP_BASE_URL: ${APP_BASE_URL}
+      ASISMETRO_API_BASE_URL: ${ASISMETRO_API_BASE_URL:-http://asismetro-automations:3000}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
       ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN}
@@ -62,6 +92,8 @@ services:
       migrate:
         condition: service_completed_successfully
       redis:
+        condition: service_healthy
+      asismetro-automations:
         condition: service_healthy
 
   worker:
@@ -73,6 +105,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       APP_BASE_URL: ${APP_BASE_URL}
+      ASISMETRO_API_BASE_URL: ${ASISMETRO_API_BASE_URL:-http://asismetro-automations:3000}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
       ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN}
@@ -81,6 +114,8 @@ services:
       migrate:
         condition: service_completed_successfully
       redis:
+        condition: service_healthy
+      asismetro-automations:
         condition: service_healthy
 
 volumes:
