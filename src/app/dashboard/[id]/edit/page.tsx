@@ -20,6 +20,7 @@ interface SubscriptionDetail {
     providerName: string;
     refreshIntervalMinutes: number;
     config: Record<string, unknown>;
+    editableConfig: Record<string, unknown>;
     secretConfiguredKeys: string[];
 }
 
@@ -75,7 +76,7 @@ export default function EditSubscriptionPage() {
                 setRefreshInterval(sub.refreshIntervalMinutes);
 
                 const initialFieldValues: Record<string, string> = {};
-                for (const [key, value] of Object.entries(sub.config ?? {})) {
+                for (const [key, value] of Object.entries(sub.editableConfig ?? {})) {
                     initialFieldValues[key] = toFieldString(value);
                 }
                 setFieldValues(initialFieldValues);
@@ -225,10 +226,6 @@ export default function EditSubscriptionPage() {
                 </div>
 
                 {selectedProvider.fields.map((field) => {
-                    const hasStoredSecret =
-                        field.secret &&
-                        subscription.secretConfiguredKeys.includes(field.key);
-
                     return (
                         <div key={field.key} className="space-y-1">
                             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -243,7 +240,7 @@ export default function EditSubscriptionPage() {
 
                             {field.type === "select" && field.options ? (
                                 <select
-                                    required={field.required && !field.secret}
+                                    required={field.required}
                                     value={fieldValues[field.key] ?? ""}
                                     onChange={(e) => setField(field.key, e.target.value)}
                                     className="block w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-50 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
@@ -267,12 +264,8 @@ export default function EditSubscriptionPage() {
                             ) : (
                                 <input
                                     type={field.type === "password" ? "password" : field.type === "number" ? "number" : "text"}
-                                    required={field.required && !(field.secret && hasStoredSecret)}
-                                    placeholder={
-                                        field.secret && hasStoredSecret
-                                            ? "Stored. Leave blank to keep current value"
-                                            : field.placeholder
-                                    }
+                                    required={field.required}
+                                    placeholder={field.placeholder}
                                     value={fieldValues[field.key] ?? ""}
                                     onChange={(e) => setField(field.key, e.target.value)}
                                     className="block w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"

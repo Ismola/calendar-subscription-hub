@@ -29,25 +29,38 @@ export async function GET(
 
     const baseUrl = env.appBaseUrl();
     const secretConfig = await getDecryptedSecretConfig(sub);
-    return NextResponse.json({
-        subscription: {
-            id: sub.id,
-            publicId: sub.publicId,
-            name: sub.name,
-            status: sub.status,
-            syncStatus: sub.syncStatus,
-            providerKey: sub.providerDefinition.key,
-            providerName: sub.providerDefinition.name,
-            refreshIntervalMinutes: sub.refreshIntervalMinutes,
-            lastSuccessfulSyncAt: sub.lastSuccessfulSyncAt,
-            nextRefreshAt: sub.nextRefreshAt,
-            lastError: sub.lastError,
-            createdAt: sub.createdAt,
-            icsUrl: `${baseUrl}/${sub.publicId}`,
-            config: sub.config,
-            secretConfiguredKeys: Object.keys(secretConfig),
+    const publicConfig = (sub.config ?? {}) as Record<string, unknown>;
+
+    return NextResponse.json(
+        {
+            subscription: {
+                id: sub.id,
+                publicId: sub.publicId,
+                name: sub.name,
+                status: sub.status,
+                syncStatus: sub.syncStatus,
+                providerKey: sub.providerDefinition.key,
+                providerName: sub.providerDefinition.name,
+                refreshIntervalMinutes: sub.refreshIntervalMinutes,
+                lastSuccessfulSyncAt: sub.lastSuccessfulSyncAt,
+                nextRefreshAt: sub.nextRefreshAt,
+                lastError: sub.lastError,
+                createdAt: sub.createdAt,
+                icsUrl: `${baseUrl}/${sub.publicId}`,
+                config: publicConfig,
+                editableConfig: {
+                    ...publicConfig,
+                    ...secretConfig,
+                },
+                secretConfiguredKeys: Object.keys(secretConfig),
+            },
         },
-    });
+        {
+            headers: {
+                "Cache-Control": "no-store",
+            },
+        }
+    );
 }
 
 export async function PATCH(

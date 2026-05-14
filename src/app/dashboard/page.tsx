@@ -91,6 +91,7 @@ export default function DashboardPage() {
     const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [calendarLoading, setCalendarLoading] = useState(false);
+    const [calendarWarnings, setCalendarWarnings] = useState<string[]>([]);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [refreshingIds, setRefreshingIds] = useState<Record<string, boolean>>({});
     const [view, setView] = useState<ViewMode>("list");
@@ -122,8 +123,22 @@ export default function DashboardPage() {
                 firstDay.toISOString()
             )}&end=${encodeURIComponent(lastDay.toISOString())}`
         )
-            .then((r) => r.json())
-            .then((d) => setCalendarEvents(d.events ?? []))
+            .then(async (r) => {
+                const data = await r.json();
+                if (!r.ok) {
+                    throw new Error(data.error ?? "Failed to load calendar events");
+                }
+                return data;
+            })
+            .then((d) => {
+                setCalendarEvents(d.events ?? []);
+                setCalendarWarnings(d.warnings ?? []);
+            })
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : "Failed to load calendar events";
+                setCalendarEvents([]);
+                setCalendarWarnings([message]);
+            })
             .finally(() => setCalendarLoading(false));
     }, [monthCursor, view]);
 
@@ -209,8 +224,8 @@ export default function DashboardPage() {
                         <button
                             onClick={() => setView("list")}
                             className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${view === "list"
-                                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                                : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                 }`}
                         >
                             List
@@ -221,8 +236,8 @@ export default function DashboardPage() {
                                 setView("calendar");
                             }}
                             className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${view === "calendar"
-                                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                                : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                 }`}
                         >
                             Calendar
@@ -268,6 +283,12 @@ export default function DashboardPage() {
                                         Provider: {sub.providerName} · Refresh every{" "}
                                         {sub.refreshIntervalMinutes} min
                                     </p>
+                                    {refreshingIds[sub.id] && (
+                                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                                            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />
+                                            Updating calendar for this user...
+                                        </p>
+                                    )}
                                     {sub.lastError && (
                                         <p className="mt-1 text-xs text-red-600 dark:text-red-400 truncate">
                                             {sub.lastError}
@@ -299,9 +320,14 @@ export default function DashboardPage() {
                                         title={refreshingIds[sub.id] ? "Refreshing..." : "Force refresh"}
                                         className="text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        <span className={refreshingIds[sub.id] ? "inline-block animate-spin" : "inline-block"}>
-                                            ↻
-                                        </span>
+                                        {refreshingIds[sub.id] ? (
+                                            <span className="inline-flex items-center gap-1">
+                                                <span className="inline-block animate-spin">↻</span>
+                                                Updating...
+                                            </span>
+                                        ) : (
+                                            <span className="inline-block">↻</span>
+                                        )}
                                     </button>
                                     <button
                                         onClick={() => handleDelete(sub.id)}
@@ -356,8 +382,8 @@ export default function DashboardPage() {
                                         key={dayKey}
                                         onClick={() => setSelectedDayKey(dayKey)}
                                         className={`min-h-24 rounded-md border p-1.5 text-left transition-colors ${isSelected
-                                                ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800"
-                                                : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                            ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800"
+                                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                                             } ${inCurrentMonth
                                                 ? "bg-white dark:bg-zinc-900"
                                                 : "bg-zinc-50 text-zinc-400 dark:bg-zinc-950 dark:text-zinc-600"
@@ -390,6 +416,13 @@ export default function DashboardPage() {
                             <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
                                 Loading events...
                             </p>
+                        )}
+                        {calendarWarnings.length > 0 && (
+                            <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-900/20 dark:text-amber-300">
+                                {calendarWarnings.map((warning) => (
+                                    <p key={warning}>{warning}</p>
+                                ))}
+                            </div>
                         )}
                         {selectedDayKey ? (
                             selectedDayEvents.length > 0 ? (

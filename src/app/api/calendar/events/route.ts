@@ -56,14 +56,35 @@ export async function GET(req: NextRequest) {
         },
     });
 
+    const diagnostics = {
+        totalSubscriptions: subscriptions.length,
+        subscriptionsWithoutSnapshot: [] as string[],
+        subscriptionsWithEmptySnapshot: [] as string[],
+        subscriptionsWithoutEventsInRange: [] as string[],
+    };
+
     const events = subscriptions.flatMap((subscription) => {
         const latestSnapshot = subscription.snapshots[0];
-        if (!latestSnapshot?.icsBody) return [];
+        if (!latestSnapshot?.icsBody) {
+            diagnostics.subscriptionsWithoutSnapshot.push(subscription.name);
+            return [];
+        }
 
-        return parseIcsEvents(latestSnapshot.icsBody)
-            .filter((event) =>
-                intersectsRange(event.startsAt, event.endsAt, rangeStart, rangeEnd)
-            )
+        const parsedEvents = parseIcsEvents(latestSnapshot.icsBody);
+        if (parsedEvents.length === 0) {
+            diagnostics.subscriptionsWithEmptySnapshot.push(subscription.name);
+            return [];
+        }
+
+        const eventsInRange = parsedEvents.filter((event) =>
+            intersectsRange(event.startsAt, event.endsAt, rangeStart, rangeEnd)
+        );
+
+        if (eventsInRange.length === 0) {
+            diagnostics.subscriptionsWithoutEventsInRange.push(subscription.name);
+        }
+
+        return eventsInRange
             .map((event) => ({
                 id: `${subscription.id}:${event.uid}`,
                 subscriptionId: subscription.id,
@@ -83,5 +104,34 @@ export async function GET(req: NextRequest) {
             : a.startsAt.localeCompare(b.startsAt)
     );
 
-    return NextResponse.json({ events });
+    const warnings: string[] = [];
+
+    if (diagnostics.subscriptionsWithoutSnapshot.length > 0) {
+        warnings.push(
+            `Hay ${diagnostics.subscriptionsWithoutSnapshot.length} calendario(s) sin sincronizacion inicial todavia.`
+        );
+    }
+
+    if (diagnostics.subscriptionsWithEmptySnapshot.length > 0) {
+        warnings.push(
+            `Hay ${diagnostics.subscriptionsWithEmptySnapshot.length} calendario(s) con snapshot sin eventos parseables.`
+        );
+    }
+
+    if (events.length === 0 && diagnostics.subscriptionsWithoutEventsInRange.length > 0) {
+        warnings.push(
+            "No se encontraron eventos en el rango seleccionado. Revisa las credenciales y que el nombre de perfil coincida exactamente."
+        );
+    }
+
+    return NextResponse.json({
+        events,
+        warnings,
+        diagnostics: {
+            totalSubscriptions: diagnostics.totalSubscriptions,
+            withoutSnapshot: diagnostics.subscriptionsWithoutSnapshot.length,
+            emptySnapshot: diagnostics.subscriptionsWithEmptySnapshot.length,
+            withoutEventsInRange: diagnostics.subscriptionsWithoutEventsInRange.length,
+        },
+    });
 }

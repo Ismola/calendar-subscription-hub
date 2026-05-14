@@ -3,8 +3,8 @@ services:
     image: ghcr.io/ismola/asismetro-automations:main
     container_name: asismetro-automations
     restart: unless-stopped
-    expose:
-      - "3000"
+    ports:
+      - "3001:3000"
     environment:
       TZ: ${TZ:-Europe/Madrid}
       STAGE: ${STAGE:-production}
