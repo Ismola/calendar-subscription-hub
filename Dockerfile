@@ -6,7 +6,7 @@ RUN apk add --no-cache libc6-compat
 FROM base AS deps
 COPY package*.json ./
 COPY prisma ./prisma
-RUN npm ci
+RUN npm ci --include=dev
 
 # ── builder ────────────────────────────────────────────────────────────────────
 FROM base AS builder
@@ -49,4 +49,4 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 USER appuser
-CMD ["node", "--import", "tsx", "src/worker/index.ts"]
+CMD ["npx", "tsx", "src/worker/index.ts"]

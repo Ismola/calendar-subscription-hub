@@ -382,6 +382,8 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
             signal: AbortSignal.timeout(30000),
         });
 
+        console.log(response)
+
         if (!response.ok) {
             const responseBody = await response.text();
             throw new Error(

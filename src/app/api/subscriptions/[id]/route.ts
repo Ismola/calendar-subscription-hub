@@ -28,7 +28,9 @@ export async function GET(
     if (!sub) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const baseUrl = env.appBaseUrl();
-    const secretConfig = await getDecryptedSecretConfig(sub);
+    const secretConfig = await getDecryptedSecretConfig(sub, {
+        failOnError: false,
+    });
     const publicConfig = (sub.config ?? {}) as Record<string, unknown>;
 
     return NextResponse.json(

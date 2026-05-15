@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:worker": "tsx watch src/worker/index.ts",
+    "devcontainer:bootstrap": "bash scripts/devcontainer-bootstrap.sh create",
+    "devcontainer:poststart": "bash scripts/devcontainer-bootstrap.sh start",
     "build": "prisma generate && next build",
     "start": "next start",
     "start:worker": "node --import tsx src/worker/index.ts",

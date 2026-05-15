@@ -1,7 +1,7 @@
 import { Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import { PrismaClient } from "@prisma/client";
-import { QUEUE_NAME } from "../lib/queue/client";
+import { QUEUE_NAME, type SyncJobData } from "../lib/queue/client";
 import { getProvider } from "../lib/providers/registry";
 import { getDecryptedSecretConfig } from "../lib/subscriptions/service";
 import { createHash } from "crypto";
@@ -12,10 +12,6 @@ const connection = new IORedis(
     process.env.REDIS_URL ?? "redis://localhost:6379",
     { maxRetriesPerRequest: null, enableReadyCheck: false }
 );
-
-interface SyncJobData {
-    subscriptionId: string;
-}
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
     const parsed = Number.parseInt(value ?? "", 10);
@@ -101,6 +97,8 @@ async function pruneSubscriptionHistory(subscriptionId: string): Promise<void> {
 
 async function processSync(job: Job<SyncJobData>): Promise<void> {
     const { subscriptionId } = job.data;
+    const source = job.data.source ?? "auto";
+    const isManual = source === "manual";
 
     const sub = await prisma.calendarSubscription.findUnique({
         where: { id: subscriptionId },
@@ -143,7 +141,7 @@ async function processSync(job: Job<SyncJobData>): Promise<void> {
     }
 
     const minSyncIntervalMinutes = provider.minSyncIntervalMinutes ?? 0;
-    if (minSyncIntervalMinutes > 0 && sub.lastAttemptedSyncAt) {
+    if (!isManual && minSyncIntervalMinutes > 0 && sub.lastAttemptedSyncAt) {
         const minWindowMs = minSyncIntervalMinutes * 60 * 1000;
         const elapsedMs = Date.now() - sub.lastAttemptedSyncAt.getTime();
 
@@ -162,7 +160,10 @@ async function processSync(job: Job<SyncJobData>): Promise<void> {
             const { getSyncQueue } = await import("../lib/queue/client");
             await getSyncQueue().add(
                 "sync",
-                { subscriptionId },
+                {
+                    subscriptionId,
+                    source: "auto",
+                },
                 {
                     jobId: `sync-${subscriptionId}-${Date.now()}`,
                     delay: waitMs,
@@ -239,7 +240,10 @@ async function processSync(job: Job<SyncJobData>): Promise<void> {
         const { getSyncQueue } = await import("../lib/queue/client");
         await getSyncQueue().add(
             "sync",
-            { subscriptionId },
+            {
+                subscriptionId,
+                source: "auto",
+            },
             {
                 jobId: `sync-${subscriptionId}-${Date.now()}`,
                 delay: sub.refreshIntervalMinutes * 60 * 1000,

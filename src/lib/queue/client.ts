@@ -3,6 +3,13 @@ import IORedis from "ioredis";
 
 const QUEUE_NAME = "calendar-sync";
 
+export type SyncSource = "auto" | "manual";
+
+export interface SyncJobData {
+    subscriptionId: string;
+    source?: SyncSource;
+}
+
 let _queue: Queue | null = null;
 let _connection: IORedis | null = null;
 
@@ -25,12 +32,15 @@ export function getSyncQueue(): Queue {
 
 export async function enqueueSync(
     subscriptionId: string,
-    opts?: { delay?: number; jobId?: string }
+    opts?: { delay?: number; jobId?: string; source?: SyncSource }
 ): Promise<void> {
     const queue = getSyncQueue();
     await queue.add(
         "sync",
-        { subscriptionId },
+        {
+            subscriptionId,
+            source: opts?.source ?? "auto",
+        },
         {
             jobId: opts?.jobId ?? `sync-${subscriptionId}-${Date.now()}`,
             delay: opts?.delay ?? 0,

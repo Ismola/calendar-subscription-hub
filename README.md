@@ -95,14 +95,25 @@ https://github.com/user-attachments/assets/4716658d-8547-4c46-87fd-c2d0dfc50b83
 
 ### Dev Container
 
-If you open the project in a Dev Container, it automatically starts `postgres`, `redis`, and `asismetro-automations` via `docker compose` and sets:
+If you open the project in a Dev Container, it works out of the box without creating `.env` or `.env.local`.
+
+On container creation/start, it automatically:
+
+- Starts `postgres`, `redis`, and `asismetro-automations`
+- Applies pending Prisma migrations
+- Starts the worker (`npm run dev:worker`) in the background
+
+The Dev Container sets:
 
 - `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public`
 - `DIRECT_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public`
 - `REDIS_URL=redis://localhost:6379`
+- `APP_BASE_URL=http://localhost:3000`
 - `ASISMETRO_API_BASE_URL=http://localhost:3001`
 
-This lets `npm run dev` and `npm run dev:worker` run directly inside the Dev Container without extra network setup.
+For missing required secrets in development (`SESSION_SECRET`, `APP_ENCRYPTION_KEY`, `ASISMETRO_BEARER_TOKEN`), the app now uses development-only fallbacks when running in the Dev Container.
+
+Worker logs are written to `.devcontainer/dev-worker.log`.
 
 ## Project Structure
 

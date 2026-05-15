@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { env } from "@/lib/env";
 
 const COOKIE_NAME = "csh_session";
 
 const PUBLIC_PATHS = ["/login", "/register", "/api/auth/login", "/api/auth/register"];
 
 function secret(): Uint8Array {
-  const s = process.env.SESSION_SECRET;
-  if (!s) throw new Error("Missing SESSION_SECRET");
-  return new TextEncoder().encode(s);
+  return new TextEncoder().encode(env.sessionSecret());
 }
 
 export async function proxy(req: NextRequest) {

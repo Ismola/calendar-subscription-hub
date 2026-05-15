@@ -19,14 +19,15 @@
 		6379
 	],
 	"containerEnv": {
+		"DEVCONTAINER": "true",
 		"DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public",
 		"DIRECT_DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public",
 		"REDIS_URL": "redis://localhost:6379",
 		"APP_BASE_URL": "http://localhost:3000",
 		"ASISMETRO_API_BASE_URL": "http://localhost:3001"
 	},
-	"postCreateCommand": "docker compose up -d postgres redis asismetro-automations && npm ci",
-	"postStartCommand": "docker compose up -d postgres redis asismetro-automations"
+	"postCreateCommand": "npm run devcontainer:bootstrap",
+	"postStartCommand": "npm run devcontainer:poststart"
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.

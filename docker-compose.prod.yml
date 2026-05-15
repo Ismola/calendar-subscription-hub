@@ -1,6 +1,7 @@
 services:
   asismetro-automations:
     image: ghcr.io/ismola/asismetro-automations:main
+    platform: linux/amd64
     container_name: asismetro-automations
     restart: unless-stopped
     expose:

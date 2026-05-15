@@ -152,7 +152,9 @@ export async function updateSubscription(
     }
 
     const currentConfig = (existing.config ?? {}) as Record<string, unknown>;
-    const currentSecretConfig = await getDecryptedSecretConfig(existing);
+    const currentSecretConfig = await getDecryptedSecretConfig(existing, {
+        failOnError: false,
+    });
 
     const mergedConfig = {
         ...currentConfig,
@@ -187,6 +189,8 @@ export async function updateSubscription(
                 ? ({ encrypted: encryptedSecretConfig } as Prisma.InputJsonValue)
                 : Prisma.JsonNull,
             nextRefreshAt,
+            syncStatus: "IDLE",
+            lastError: null,
         },
         include: { providerDefinition: true },
     });
@@ -195,13 +199,28 @@ export async function updateSubscription(
 }
 
 export async function getDecryptedSecretConfig(
-    sub: CalendarSubscription
+    sub: CalendarSubscription,
+    options?: { failOnError?: boolean }
 ): Promise<Record<string, unknown>> {
     if (!sub.secretConfig) return {};
     const raw = sub.secretConfig as Record<string, string>;
     if (!raw.encrypted) return {};
-    const decrypted = await decrypt(raw.encrypted);
-    return JSON.parse(decrypted) as Record<string, unknown>;
+
+    try {
+        const decrypted = await decrypt(raw.encrypted);
+        return JSON.parse(decrypted) as Record<string, unknown>;
+    } catch (err) {
+        if (options?.failOnError ?? true) {
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : "Failed to decrypt secret config";
+            throw new Error(
+                `Unable to decrypt secret config with current or legacy APP_ENCRYPTION_KEY: ${message}`
+            );
+        }
+        return {};
+    }
 }
 
 export async function getLatestSnapshot(

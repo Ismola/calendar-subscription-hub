@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# devcontainer runtime artifacts
+.devcontainer/dev-worker.log
+.devcontainer/dev-worker.pid
+
 # vercel
 .vercel
 

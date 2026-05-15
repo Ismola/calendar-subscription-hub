@@ -2,14 +2,13 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { createHash, randomBytes } from "crypto";
+import { env } from "@/lib/env";
 
 const COOKIE_NAME = "csh_session";
 const SESSION_TTL_DAYS = 30;
 
 function secret(): Uint8Array {
-    const s = process.env.SESSION_SECRET;
-    if (!s) throw new Error("Missing SESSION_SECRET");
-    return new TextEncoder().encode(s);
+    return new TextEncoder().encode(env.sessionSecret());
 }
 
 function hashToken(token: string): string {
