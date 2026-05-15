@@ -6,6 +6,8 @@ import {
     getUserSubscriptions,
 } from "@/lib/subscriptions/service";
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/db";
+import { runSubscriptionSync } from "@/lib/subscriptions/run-sync";
 
 const createSchema = z.object({
     name: z.string().min(1).max(200),
@@ -66,6 +68,13 @@ export async function POST(req: NextRequest) {
             ...parsed.data,
         });
 
+        const syncResult = await runSubscriptionSync({
+            prisma,
+            subscriptionId: sub.id,
+            source: "manual",
+            logPrefix: "[api-create]",
+        });
+
         const baseUrl = env.appBaseUrl();
         return NextResponse.json(
             {
@@ -75,6 +84,7 @@ export async function POST(req: NextRequest) {
                     name: sub.name,
                     icsUrl: `${baseUrl}/${sub.publicId}`,
                 },
+                sync: syncResult,
             },
             { status: 201 }
         );

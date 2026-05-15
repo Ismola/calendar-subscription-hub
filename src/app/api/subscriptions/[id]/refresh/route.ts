@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSubscriptionById } from "@/lib/subscriptions/service";
-import { enqueueSync } from "@/lib/queue/client";
 import { prisma } from "@/lib/db";
+import { runSubscriptionSync } from "@/lib/subscriptions/run-sync";
 
 export async function POST(
     _req: NextRequest,
@@ -15,15 +15,20 @@ export async function POST(
     const sub = await getSubscriptionById(id, session.userId);
     if (!sub) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await prisma.calendarSubscription.update({
-        where: { id: sub.id },
-        data: {
-            syncStatus: "IDLE",
-            lastError: null,
-        },
+    const result = await runSubscriptionSync({
+        prisma,
+        subscriptionId: sub.id,
+        source: "manual",
+        logPrefix: "[api-refresh]",
     });
 
-    await enqueueSync(sub.id, { delay: 0, source: "manual" });
-
-    return NextResponse.json({ ok: true, message: "Sync enqueued" });
+    const status = result.status === "error" ? 502 : 200;
+    return NextResponse.json(
+        {
+            ok: result.status === "success" || result.status === "rate_limited",
+            status: result.status,
+            message: result.message,
+        },
+        { status }
+    );
 }

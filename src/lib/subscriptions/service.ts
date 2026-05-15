@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import { encrypt, decrypt } from "@/lib/crypto";
 import { getProvider } from "@/lib/providers/registry";
-import { enqueueSync } from "@/lib/queue/client";
 import { Prisma } from "@prisma/client";
 import type { CalendarSubscription, SubscriptionStatus } from "@prisma/client";
 
@@ -92,9 +91,6 @@ export async function createSubscription(
             nextRefreshAt,
         },
     });
-
-    // Schedule first sync
-    await enqueueSync(subscription.id, { delay: 0 });
 
     return subscription;
 }
