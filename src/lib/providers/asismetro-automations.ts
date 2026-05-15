@@ -382,16 +382,19 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
             signal: AbortSignal.timeout(30000),
         });
 
-        console.log(response)
+        const responseText = await response.clone().text();
+        if (process.env.NODE_ENV !== "production") {
+            console.log("[asismetro] raw response:", responseText);
+        }
+
 
         if (!response.ok) {
-            const responseBody = await response.text();
             throw new Error(
-                `Asismetro devolvio ${response.status}: ${responseBody.slice(0, 300)}`
+                `Asismetro devolvio ${response.status}: ${responseText.slice(0, 300)}`
             );
         }
 
-        const rawResponse: unknown = await response.json();
+        const rawResponse: unknown = JSON.parse(responseText);
         const parsedResponse = apiResponseSchema.parse(rawResponse);
         if (parsedResponse.status.toUpperCase() !== "OK") {
             throw new Error("Asismetro devolvio una respuesta no valida");

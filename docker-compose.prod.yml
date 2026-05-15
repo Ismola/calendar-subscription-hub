@@ -4,19 +4,22 @@ services:
     platform: linux/amd64
     container_name: asismetro-automations
     restart: unless-stopped
+    # volumes:
+    #   - ./logs:/app/logs
+    #   - ./temp_downloads:/app/temp_downloads
     expose:
       - "3000"
     environment:
-      TZ: ${TZ:-Europe/Madrid}
+      # TZ: ${TZ:-Europe/Madrid}
       STAGE: ${STAGE:-production}
-      VALID_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
-      AUTO_DELETE_LOGS: ${AUTO_DELETE_LOGS:-True}
-      HEADLESS_MODE: ${HEADLESS_MODE:-auto}
-      BROWSER_LANGUAGE: ${BROWSER_LANGUAGE:-en}
-      DOWNLOAD_DIR: ${DOWNLOAD_DIR:-temp_downloads}
-      PAGE_MAX_TIMEOUT: ${PAGE_MAX_TIMEOUT:-7}
-      DOWNLOAD_MAX_TIMEOUT: ${DOWNLOAD_MAX_TIMEOUT:-4}
-      BASE_URL: ${BASE_URL:-https://www.google.com/}
+      # VALID_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
+      # AUTO_DELETE_LOGS: ${AUTO_DELETE_LOGS:-True}
+      # HEADLESS_MODE: ${HEADLESS_MODE:-auto}
+      # BROWSER_LANGUAGE: ${BROWSER_LANGUAGE:-en}
+      # DOWNLOAD_DIR: ${DOWNLOAD_DIR:-temp_downloads}
+      # PAGE_MAX_TIMEOUT: ${PAGE_MAX_TIMEOUT:-7}
+      # DOWNLOAD_MAX_TIMEOUT: ${DOWNLOAD_MAX_TIMEOUT:-4}
+      
     healthcheck:
       test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/')" ]
       interval: 30s
