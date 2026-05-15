@@ -11,7 +11,7 @@ services:
     environment:
       # TZ: ${TZ:-Europe/Madrid}
       STAGE: ${STAGE:-production}
-      # VALID_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
+      VALID_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
       # AUTO_DELETE_LOGS: ${AUTO_DELETE_LOGS:-True}
       # HEADLESS_MODE: ${HEADLESS_MODE:-auto}
       # BROWSER_LANGUAGE: ${BROWSER_LANGUAGE:-en}
