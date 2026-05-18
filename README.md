@@ -4,7 +4,7 @@ A self-hosted web application that aggregates calendar data from external provid
 
 This is the official open-source frontend and backend for [asismetro-automations](https://github.com/Ismola/asismetro-automations), a project that automates schedule retrieval from Asismetro and makes it available as a subscribable calendar feed.
 
-**Public instance:** [calendar-subscription-hub.ismola.dev](https://calendar-subscription-hub.ismola.dev)
+**Public web:** [calendar-subscription-hub.ismola.dev](https://calendar-subscription-hub.ismola.dev)
 
 ## Features
 
