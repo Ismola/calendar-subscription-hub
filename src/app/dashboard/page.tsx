@@ -347,44 +347,7 @@ export default function DashboardPage() {
                 </div>
             ) : view === "list" ? (
                 <div className="space-y-3">
-                    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                            How to add your subscribed calendar
-                        </h2>
-                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Copy any ICS URL below and follow the steps for your operating system.
-                        </p>
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                            {SUBSCRIPTION_TUTORIALS.map((tutorial) => (
-                                <article
-                                    key={tutorial.id}
-                                    className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 p-3"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <TutorialIcon platformId={tutorial.id} />
-                                        <div>
-                                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                {tutorial.title}
-                                            </p>
-                                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                                {tutorial.subtitle}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <ol className="mt-3 space-y-1">
-                                        {tutorial.steps.map((step, index) => (
-                                            <li key={`${tutorial.id}-${step.id}`} className="flex gap-2 text-xs text-zinc-600 dark:text-zinc-300">
-                                                <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-[10px] font-semibold text-zinc-700 dark:text-zinc-200">
-                                                    {index + 1}
-                                                </span>
-                                                <span>{step.text}</span>
-                                            </li>
-                                        ))}
-                                    </ol>
-                                </article>
-                            ))}
-                        </div>
-                    </div>
+                 
                     {subscriptions.map((sub) => (
                         <div
                             key={sub.id}
@@ -462,6 +425,44 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     ))}
+                       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                            How to add your subscribed calendar
+                        </h2>
+                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            Copy any ICS URL below and follow the steps for your operating system.
+                        </p>
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            {SUBSCRIPTION_TUTORIALS.map((tutorial) => (
+                                <article
+                                    key={tutorial.id}
+                                    className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 p-3"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <TutorialIcon platformId={tutorial.id} />
+                                        <div>
+                                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                {tutorial.title}
+                                            </p>
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                                {tutorial.subtitle}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <ol className="mt-3 space-y-1">
+                                        {tutorial.steps.map((step, index) => (
+                                            <li key={`${tutorial.id}-${step.id}`} className="flex gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                                                <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-[10px] font-semibold text-zinc-700 dark:text-zinc-200">
+                                                    {index + 1}
+                                                </span>
+                                                <span>{step.text}</span>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-4">
