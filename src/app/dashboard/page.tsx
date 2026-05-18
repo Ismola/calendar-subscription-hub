@@ -39,9 +39,9 @@ const SUBSCRIPTION_TUTORIALS = [
         title: "Apple Calendar",
         subtitle: "iOS / iPadOS / macOS",
         steps: [
-            "Open Settings (iPhone/iPad) or Calendar settings (Mac).",
-            "Go to Accounts → Add account → Other → Subscribed Calendar.",
-            "Paste your ICS URL and save.",
+            { id: "open-settings", text: "Open Settings (iPhone/iPad) or Calendar settings (Mac)." },
+            { id: "add-account", text: "Go to Accounts → Add account → Other → Subscribed Calendar." },
+            { id: "paste-url", text: "Paste your ICS URL and save." },
         ],
     },
     {
@@ -49,9 +49,9 @@ const SUBSCRIPTION_TUTORIALS = [
         title: "Google Calendar",
         subtitle: "Android / Web",
         steps: [
-            "Open Google Calendar on web (desktop browser).",
-            "In Other calendars, choose From URL.",
-            "Paste your ICS URL and add calendar (syncs to Android too).",
+            { id: "open-web", text: "Open Google Calendar on web (desktop browser)." },
+            { id: "from-url", text: "In Other calendars, choose From URL." },
+            { id: "add-calendar", text: "Paste your ICS URL and add calendar (syncs to Android too)." },
         ],
     },
     {
@@ -59,9 +59,9 @@ const SUBSCRIPTION_TUTORIALS = [
         title: "Outlook",
         subtitle: "Windows / macOS",
         steps: [
-            "Open Outlook Calendar.",
-            "Choose Add calendar → Subscribe from web.",
-            "Paste your ICS URL and confirm.",
+            { id: "open-outlook-calendar", text: "Open Outlook Calendar." },
+            { id: "subscribe", text: "Choose Add calendar → Subscribe from web." },
+            { id: "confirm", text: "Paste your ICS URL and confirm." },
         ],
     },
     {
@@ -69,9 +69,9 @@ const SUBSCRIPTION_TUTORIALS = [
         title: "Thunderbird",
         subtitle: "Linux / Desktop",
         steps: [
-            "Open Calendar in Thunderbird.",
-            "Create a new network calendar.",
-            "Select iCalendar (ICS), paste your URL, and finish.",
+            { id: "open-thunderbird-calendar", text: "Open Calendar in Thunderbird." },
+            { id: "network", text: "Create a new network calendar." },
+            { id: "ical", text: "Select iCalendar (ICS), paste your URL, and finish." },
         ],
     },
 ] as const;
@@ -132,7 +132,7 @@ function StatusBadge({ status }: { status: string }) {
 function TutorialIcon({ platformId }: { platformId: string }) {
     if (platformId === "apple") {
         return (
-            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden>
+            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
                 <rect x="5" y="2" width="14" height="20" rx="3" stroke="currentColor" strokeWidth="1.5" />
                 <circle cx="12" cy="18" r="1.2" fill="currentColor" />
                 <path d="M9 6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -142,7 +142,7 @@ function TutorialIcon({ platformId }: { platformId: string }) {
 
     if (platformId === "google") {
         return (
-            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden>
+            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M3 9h18" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M8 2v4M16 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -153,7 +153,7 @@ function TutorialIcon({ platformId }: { platformId: string }) {
 
     if (platformId === "outlook") {
         return (
-            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden>
+            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
                 <rect x="3" y="5" width="9" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
                 <rect x="12" y="4" width="9" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M15 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -162,7 +162,7 @@ function TutorialIcon({ platformId }: { platformId: string }) {
     }
 
     return (
-        <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden>
+        <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
             <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
             <path d="M8 9h8M8 13h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             <circle cx="17" cy="17" r="1.2" fill="currentColor" />
@@ -373,11 +373,11 @@ export default function DashboardPage() {
                                     </div>
                                     <ol className="mt-3 space-y-1">
                                         {tutorial.steps.map((step, index) => (
-                                            <li key={`${tutorial.id}-${index}`} className="flex gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                                            <li key={`${tutorial.id}-${step.id}`} className="flex gap-2 text-xs text-zinc-600 dark:text-zinc-300">
                                                 <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-[10px] font-semibold text-zinc-700 dark:text-zinc-200">
                                                     {index + 1}
                                                 </span>
-                                                <span>{step}</span>
+                                                <span>{step.text}</span>
                                             </li>
                                         ))}
                                     </ol>
