@@ -33,6 +33,49 @@ type ViewMode = "list" | "calendar";
 
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const SUBSCRIPTION_TUTORIALS = [
+    {
+        id: "apple",
+        title: "Apple Calendar",
+        subtitle: "iOS / iPadOS / macOS",
+        steps: [
+            { id: "open-settings", text: "Open Settings (iPhone/iPad) or Calendar settings (Mac)." },
+            { id: "add-account", text: "Go to Accounts → Add account → Other → Subscribed Calendar." },
+            { id: "paste-url", text: "Paste your ICS URL and save." },
+        ],
+    },
+    {
+        id: "google",
+        title: "Google Calendar",
+        subtitle: "Android / Web",
+        steps: [
+            { id: "open-web", text: "Open Google Calendar on web (desktop browser)." },
+            { id: "from-url", text: "In Other calendars, choose From URL." },
+            { id: "add-calendar", text: "Paste your ICS URL and add calendar (syncs to Android too)." },
+        ],
+    },
+    {
+        id: "outlook",
+        title: "Outlook",
+        subtitle: "Windows / macOS",
+        steps: [
+            { id: "open-outlook-calendar", text: "Open Outlook Calendar." },
+            { id: "subscribe", text: "Choose Add calendar → Subscribe from web." },
+            { id: "confirm", text: "Paste your ICS URL and confirm." },
+        ],
+    },
+    {
+        id: "thunderbird",
+        title: "Thunderbird",
+        subtitle: "Linux / Desktop",
+        steps: [
+            { id: "open-thunderbird-calendar", text: "Open Calendar in Thunderbird." },
+            { id: "network", text: "Create a new network calendar." },
+            { id: "ical", text: "Select iCalendar (ICS), paste your URL, and finish." },
+        ],
+    },
+] as const;
+
 function toDateKey(date: Date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -83,6 +126,47 @@ function StatusBadge({ status }: { status: string }) {
         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? map.PENDING}`}>
             {status.toLowerCase()}
         </span>
+    );
+}
+
+function TutorialIcon({ platformId }: { platformId: string }) {
+    if (platformId === "apple") {
+        return (
+            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
+                <rect x="5" y="2" width="14" height="20" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="12" cy="18" r="1.2" fill="currentColor" />
+                <path d="M9 6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+        );
+    }
+
+    if (platformId === "google") {
+        return (
+            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M3 9h18" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M8 2v4M16 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="12" cy="14" r="2" fill="currentColor" />
+            </svg>
+        );
+    }
+
+    if (platformId === "outlook") {
+        return (
+            <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
+                <rect x="3" y="5" width="9" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                <rect x="12" y="4" width="9" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M15 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+        );
+    }
+
+    return (
+        <svg viewBox="0 0 24 24" className="h-10 w-10 text-zinc-900 dark:text-zinc-100" fill="none" aria-hidden="true">
+            <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 9h8M8 13h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="17" cy="17" r="1.2" fill="currentColor" />
+        </svg>
     );
 }
 
@@ -263,6 +347,7 @@ export default function DashboardPage() {
                 </div>
             ) : view === "list" ? (
                 <div className="space-y-3">
+                 
                     {subscriptions.map((sub) => (
                         <div
                             key={sub.id}
@@ -340,6 +425,44 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     ))}
+                       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                            How to add your subscribed calendar
+                        </h2>
+                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            Copy any ICS URL below and follow the steps for your operating system.
+                        </p>
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            {SUBSCRIPTION_TUTORIALS.map((tutorial) => (
+                                <article
+                                    key={tutorial.id}
+                                    className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 p-3"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <TutorialIcon platformId={tutorial.id} />
+                                        <div>
+                                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                {tutorial.title}
+                                            </p>
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                                {tutorial.subtitle}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <ol className="mt-3 space-y-1">
+                                        {tutorial.steps.map((step, index) => (
+                                            <li key={`${tutorial.id}-${step.id}`} className="flex gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                                                <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-[10px] font-semibold text-zinc-700 dark:text-zinc-200">
+                                                    {index + 1}
+                                                </span>
+                                                <span>{step.text}</span>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-4">
