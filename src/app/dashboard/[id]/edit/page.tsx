@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { env } from "@/lib/env";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type { ProviderFieldDefinition } from "@/lib/providers/types";
@@ -40,7 +41,7 @@ export default function EditSubscriptionPage() {
     const [subscription, setSubscription] = useState<SubscriptionDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [name, setName] = useState("");
-    const [refreshInterval, setRefreshInterval] = useState<number>(60);
+    const [refreshInterval, setRefreshInterval] = useState<number>(() => env.defaultRefreshMinutes());
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -216,7 +217,7 @@ export default function EditSubscriptionPage() {
                     </label>
                     <input
                         type="number"
-                        min={5}
+                        min={60}
                         max={1440}
                         required
                         value={refreshInterval}

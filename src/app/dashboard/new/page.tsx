@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { env } from "@/lib/env";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ProviderFieldDefinition } from "@/lib/providers/types";
@@ -19,7 +20,7 @@ export default function NewSubscriptionPage() {
     const [loadingProviders, setLoadingProviders] = useState(true);
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [name, setName] = useState("");
-    const [refreshInterval, setRefreshInterval] = useState<number>(60);
+    const [refreshInterval, setRefreshInterval] = useState<number>(() => env.defaultRefreshMinutes());
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -131,8 +132,8 @@ export default function NewSubscriptionPage() {
                                 key={p.key}
                                 onClick={() => selectProvider(p)}
                                 className={`w-full text-left rounded-lg border px-4 py-3 transition-colors ${selectedProvider?.key === p.key
-                                        ? "border-zinc-900 dark:border-zinc-50 bg-zinc-50 dark:bg-zinc-800"
-                                        : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500"
+                                    ? "border-zinc-900 dark:border-zinc-50 bg-zinc-50 dark:bg-zinc-800"
+                                    : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500"
                                     }`}
                             >
                                 <p className="font-medium text-sm text-zinc-900 dark:text-zinc-50">

@@ -37,6 +37,6 @@ export const env = {
         required("APP_ENCRYPTION_KEY", "0123456789abcdef0123456789abcdef"),
     sessionSecret: () => required("SESSION_SECRET", "dev-session-secret"),
     asismetroBearerToken: () => required("ASISMETRO_BEARER_TOKEN", "sample"),
-    defaultRefreshMinutes: () => positiveInt("DEFAULT_REFRESH_MINUTES", 60),
+    defaultRefreshMinutes: () => positiveInt("DEFAULT_REFRESH_MINUTES", 360),
     asismetroMinSyncHours: () => positiveInt("ASISMETRO_MIN_SYNC_HOURS", 4),
 };
