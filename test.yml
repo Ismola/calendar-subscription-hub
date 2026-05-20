@@ -18,9 +18,15 @@ services:
       # DOWNLOAD_DIR: ${DOWNLOAD_DIR:-temp_downloads}
       # PAGE_MAX_TIMEOUT: ${PAGE_MAX_TIMEOUT:-7}
       # DOWNLOAD_MAX_TIMEOUT: ${DOWNLOAD_MAX_TIMEOUT:-4}
-      
+
     healthcheck:
-      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/')" ]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:3000/')",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -41,12 +47,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
       - cloudflare_default
+
   redis:
     container_name: redis-calendar-subscription-hub
     image: redis:7-alpine
@@ -54,7 +61,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -63,9 +70,7 @@ services:
 
   migrate:
     container_name: migrate-calendar-subscription-hub
-    build:
-      context: .
-      target: migrate
+    image: ghcr.io/ismola/calendar-subscription-hub:migrate-main
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/calendar-subscription-hub?schema=public
       DIRECT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/calendar-subscription-hub?schema=public
@@ -76,10 +81,7 @@ services:
       - cloudflare_default
 
   web:
-    container_name: web-calendar-subscription-hub
-    build:
-      context: .
-      target: runner
+    image: ghcr.io/ismola/calendar-subscription-hub:web-main
     restart: unless-stopped
     expose:
       - "3000"
@@ -106,10 +108,7 @@ services:
       - cloudflare_default
 
   worker:
-    container_name: worker-calendar-subscription-hub
-    build:
-      context: .
-      target: worker
+    image: ghcr.io/ismola/calendar-subscription-hub:worker-main
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/calendar-subscription-hub?schema=public}
