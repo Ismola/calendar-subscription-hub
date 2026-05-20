@@ -8,7 +8,7 @@ services:
       - ./temp_downloads:/app/temp_downloads
     ports:
       - "3001:3000"
-    environment:      
+    environment:
       STAGE: ${STAGE:-production}
       VALID_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
     healthcheck:
@@ -52,9 +52,18 @@ services:
 
   migrate:
     image: ghcr.io/ismola/calendar-subscription-hub:migrate-main
-    build:
-      context: .
-      target: migrate
+    container_name: migrate-calendar-subscription-hub
+    command:
+      - /bin/sh
+      - -c
+      - |
+        for i in $(seq 1 20); do
+          ./node_modules/.bin/prisma migrate deploy --schema=/app/prisma/schema.prisma && exit 0
+          echo "[migrate] intento $${i}/20 fallido; reintentando en 3s..."
+          sleep 3
+        done
+        echo "[migrate] no se pudo completar migrate deploy"
+        exit 1
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/calendar_subscription_hub?schema=public
       DIRECT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/calendar_subscription_hub?schema=public
@@ -67,6 +76,7 @@ services:
       context: .
       target: runner
     restart: unless-stopped
+    container_name: web-calendar-subscription-hub
     ports:
       - "3000:3000"
     environment:
@@ -82,8 +92,6 @@ services:
       ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
       DEFAULT_REFRESH_MINUTES: ${DEFAULT_REFRESH_MINUTES:-360}
     depends_on:
-      migrate:
-        condition: service_completed_successfully
       redis:
         condition: service_healthy
       asismetro-automations:
@@ -94,6 +102,7 @@ services:
       context: .
       target: worker
     restart: unless-stopped
+    container_name: worker-calendar-subscription-hub
     environment:
       DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/calendar_subscription_hub?schema=public}
       REDIS_URL: ${REDIS_URL_DOCKER:-redis://redis:6379}
@@ -104,8 +113,6 @@ services:
       ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
       DEFAULT_REFRESH_MINUTES: ${DEFAULT_REFRESH_MINUTES:-360}
     depends_on:
-      migrate:
-        condition: service_completed_successfully
       redis:
         condition: service_healthy
       asismetro-automations:
