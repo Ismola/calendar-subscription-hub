@@ -64,9 +64,7 @@ services:
         condition: service_healthy
 
   web:
-    build:
-      context: .
-      target: runner
+    image: ghcr.io/ismola/calendar-subscription-hub:web-main
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -91,9 +89,7 @@ services:
         condition: service_healthy
 
   worker:
-    build:
-      context: .
-      target: worker
+    image: ghcr.io/ismola/calendar-subscription-hub:worker-main
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/calendar_subscription_hub?schema=public}

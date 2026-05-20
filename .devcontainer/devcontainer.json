@@ -27,7 +27,14 @@
 		"ASISMETRO_API_BASE_URL": "http://localhost:3001"
 	},
 	"postCreateCommand": "npm run devcontainer:bootstrap",
-	"postStartCommand": "npm run devcontainer:poststart"
+	"postStartCommand": "npm run devcontainer:poststart",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ismola.ismola-extension-pack"
+			]
+		}
+	}
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
