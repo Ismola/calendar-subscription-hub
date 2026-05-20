@@ -52,6 +52,9 @@ services:
 
   migrate:
     image: ghcr.io/ismola/calendar-subscription-hub:migrate-main
+    build:
+      context: .
+      target: migrate
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/calendar_subscription_hub?schema=public
       DIRECT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/calendar_subscription_hub?schema=public
