@@ -1,0 +1,23 @@
+name: 🐳 Smoke Test
+
+on:
+  workflow_call:
+  pull_request:
+
+jobs:
+  docker-compose-up:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start Docker Compose
+        run: docker compose -f docker-compose.yml up --build -d
+
+      - name: Show running containers
+        run: docker compose -f docker-compose.yml ps
+
+      - name: Stop Docker Compose
+        if: always()
+        run: docker compose -f docker-compose.yml down -v
