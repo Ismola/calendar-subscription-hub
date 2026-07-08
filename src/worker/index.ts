@@ -1,3 +1,5 @@
+import "../lib/load-env";
+
 import { Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import { PrismaClient } from "@prisma/client";
