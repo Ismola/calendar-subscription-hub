@@ -18,14 +18,6 @@
 		5432,
 		6379
 	],
-	"containerEnv": {
-		"DEVCONTAINER": "true",
-		"DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public",
-		"DIRECT_DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/calendar_subscription_hub?schema=public",
-		"REDIS_URL": "redis://localhost:6379",
-		"APP_BASE_URL": "http://localhost:3000",
-		"ASISMETRO_API_BASE_URL": "http://localhost:3001"
-	},
 	"postCreateCommand": "npm run devcontainer:bootstrap",
 	"postStartCommand": "npm run devcontainer:poststart",
 	"customizations": {
