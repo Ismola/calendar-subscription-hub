@@ -12,11 +12,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Pre-pull base images with retry
+        run: |
+          for i in 1 2 3 4 5; do
+            docker pull node:22-alpine && break
+            echo "Docker Hub falló, reintentando en 10s..."
+            sleep 10
+          done
+
       - name: Start Docker Compose
         run: docker compose -f docker-compose.yml up --build -d
 
       - name: Show running containers
         run: docker compose -f docker-compose.yml ps
+
+      - name: Show logs
+        if: always()
+        run: docker compose -f docker-compose.yml logs --no-color
 
       - name: Stop Docker Compose
         if: always()

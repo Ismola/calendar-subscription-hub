@@ -87,17 +87,21 @@ services:
       HOSTNAME: 0.0.0.0
       DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/calendar_subscription_hub?schema=public}
       REDIS_URL: ${REDIS_URL_DOCKER:-redis://redis:6379}
-      APP_BASE_URL: ${APP_BASE_URL}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
       ASISMETRO_API_BASE_URL: ${ASISMETRO_API_BASE_URL_DOCKER:-http://asismetro-automations:3000}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef}
       SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret}
       ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
       DEFAULT_REFRESH_MINUTES: ${DEFAULT_REFRESH_MINUTES:-360}
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
       asismetro-automations:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   worker:
     build:
@@ -115,10 +119,14 @@ services:
       ASISMETRO_BEARER_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
       DEFAULT_REFRESH_MINUTES: ${DEFAULT_REFRESH_MINUTES:-360}
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
       asismetro-automations:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
