@@ -1,30 +1,17 @@
 import "./load-env";
 
-function required(name: string): string {
-    const val = process.env[name];
-    if (!val) throw new Error(`Missing required environment variable: ${name}`);
-    return val;
-}
 
-function positiveInt(name: string, fallback: number): number {
-    const raw = process.env[name];
-    if (!raw) return fallback;
-    const parsed = Number.parseInt(raw, 10);
-    if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-    return parsed;
-}
 
 export const env = {
-    databaseUrl: () =>
-        required("DATABASE_URL"),
+    databaseUrl: () =>process.env.REDIS_URL ?? "postgresql://postgres:postgres@localhost:5432/calendar-subscription-hub",
     redisUrl: () => process.env.REDIS_URL ?? "redis://localhost:6379",
     appBaseUrl: () => process.env.APP_BASE_URL ?? "http://localhost:3000",
     asismetroApiBaseUrl: () =>
         process.env.ASISMETRO_API_BASE_URL ??
         "http://asismetro-automations:3000",
-    encryptionKey: () => required("APP_ENCRYPTION_KEY"),
-    sessionSecret: () => required("SESSION_SECRET"),
-    asismetroBearerToken: () => required("ASISMETRO_BEARER_TOKEN"),
-    defaultRefreshMinutes: () => positiveInt("DEFAULT_REFRESH_MINUTES", 360),
-    asismetroMinSyncHours: () => positiveInt("ASISMETRO_MIN_SYNC_HOURS", 4),
+    encryptionKey: () => process.env.APP_ENCRYPTION_KEY ?? "default_encryption_key",
+    sessionSecret: () => process.env.SESSION_SECRET ?? "default_session_secret",
+    asismetroBearerToken: () => process.env.ASISMETRO_BEARER_TOKEN ?? "default_bearer_token",
+    defaultRefreshMinutes: () => Number(process.env.DEFAULT_REFRESH_MINUTES) || 360,
+    asismetroMinSyncHours: () => Number(process.env.ASISMETRO_MIN_SYNC_HOURS) || 4,
 };
