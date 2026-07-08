@@ -281,6 +281,12 @@ export default function DashboardPage() {
         setTimeout(() => setCopiedId(null), 2000);
     }
 
+    async function addToCalendar(id: string, url: string) {
+        const calendarUrl = `webcal://${url.replace(/^https?:\/\//, "")}`;
+        // open calendar app with the webcal URL
+        window.location.href = calendarUrl;
+    }
+
     function moveMonth(step: number) {
         setCalendarLoading(true);
         setMonthCursor(
@@ -347,7 +353,7 @@ export default function DashboardPage() {
                 </div>
             ) : view === "list" ? (
                 <div className="space-y-3">
-                 
+
                     {subscriptions.map((sub) => (
                         <div
                             key={sub.id}
@@ -389,6 +395,12 @@ export default function DashboardPage() {
                                         >
                                             {copiedId === sub.id ? "Copied!" : "Copy"}
                                         </button>
+                                        <button
+                                            onClick={() => addToCalendar(sub.id, sub.icsUrl)}
+                                            className="shrink-0 text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                                        >
+                                            Add to Calendar
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
@@ -425,7 +437,7 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     ))}
-                       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+                    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
                         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
                             How to add your subscribed calendar
                         </h2>
