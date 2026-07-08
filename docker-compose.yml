@@ -51,7 +51,9 @@ services:
       retries: 10
 
   migrate:
-    image: ghcr.io/ismola/calendar-subscription-hub:migrate-main
+    build:
+      context: .
+      target: migrate
     container_name: migrate-calendar-subscription-hub
     command:
       - /bin/sh
