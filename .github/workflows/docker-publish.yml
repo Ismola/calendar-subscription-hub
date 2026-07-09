@@ -1,4 +1,3 @@
-#
 name: 🚀 Publish
 
 # Este workflow debe ser llamado desde deploy.yml, no ejecutarse directamente
@@ -7,68 +6,84 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_BASE: ${{ github.repository }}
 
 jobs:
-  # smoke: job removido - los tests ya se ejecutan en deploy.yml
   build-and-push-image:
-    # needs: [smoke]  # Removido - deploy.yml ya asegura que los tests pasen
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Prepare image names
+        shell: bash
+        run: |
+          IMAGE_BASE_LC="$(echo "${IMAGE_BASE}" | tr '[:upper:]' '[:lower:]')"
+
+          echo "WEB_IMAGE=${REGISTRY}/${IMAGE_BASE_LC}-web" >> "$GITHUB_ENV"
+          echo "WORKER_IMAGE=${REGISTRY}/${IMAGE_BASE_LC}-worker" >> "$GITHUB_ENV"
+          echo "MIGRATE_IMAGE=${REGISTRY}/${IMAGE_BASE_LC}-migrate" >> "$GITHUB_ENV"
+
+          echo "Web image: ${REGISTRY}/${IMAGE_BASE_LC}-web"
+          echo "Worker image: ${REGISTRY}/${IMAGE_BASE_LC}-worker"
+          echo "Migrate image: ${REGISTRY}/${IMAGE_BASE_LC}-migrate"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      # Uses the `docker/login-action` action to log in to the Container registry registry using the account and password that will publish the packages. Once published, the packages are scoped to the account defined here.
+
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for web image
+
+      - name: Extract metadata for web image
         id: meta_web
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.WEB_IMAGE }}
           tags: |
-            type=raw,value=web-main
-            type=sha,prefix=web-
-            type=ref,event=tag,prefix=web-
-            type=ref,event=branch,prefix=web-
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,prefix=sha-
+            type=ref,event=tag
+            type=ref,event=branch
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
-      - name: Extract metadata (tags, labels) for worker image
+      - name: Extract metadata for worker image
         id: meta_worker
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.WORKER_IMAGE }}
           tags: |
-            type=raw,value=worker-main
-            type=sha,prefix=worker-
-            type=ref,event=tag,prefix=worker-
-            type=ref,event=branch,prefix=worker-
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,prefix=sha-
+            type=ref,event=tag
+            type=ref,event=branch
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
-      - name: Extract metadata (tags, labels) for migrate image
+      - name: Extract metadata for migrate image
         id: meta_migrate
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.MIGRATE_IMAGE }}
           tags: |
-            type=raw,value=migrate-main
-            type=sha,prefix=migrate-
-            type=ref,event=tag,prefix=migrate-
-            type=ref,event=branch,prefix=migrate-
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,prefix=sha-
+            type=ref,event=tag
+            type=ref,event=branch
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
@@ -105,23 +120,23 @@ jobs:
           tags: ${{ steps.meta_migrate.outputs.tags }}
           labels: ${{ steps.meta_migrate.outputs.labels }}
 
-      - name: Generate artifact attestation (web)
+      - name: Generate artifact attestation for web image
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-name: ${{ env.WEB_IMAGE }}
           subject-digest: ${{ steps.push_web.outputs.digest }}
           push-to-registry: true
 
-      - name: Generate artifact attestation (worker)
+      - name: Generate artifact attestation for worker image
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-name: ${{ env.WORKER_IMAGE }}
           subject-digest: ${{ steps.push_worker.outputs.digest }}
           push-to-registry: true
 
-      - name: Generate artifact attestation (migrate)
+      - name: Generate artifact attestation for migrate image
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-name: ${{ env.MIGRATE_IMAGE }}
           subject-digest: ${{ steps.push_migrate.outputs.digest }}
           push-to-registry: true
