@@ -108,19 +108,19 @@ export async function GET(req: NextRequest) {
 
     if (diagnostics.subscriptionsWithoutSnapshot.length > 0) {
         warnings.push(
-            `Hay ${diagnostics.subscriptionsWithoutSnapshot.length} calendario(s) sin sincronizacion inicial todavia.`
+            `There are ${diagnostics.subscriptionsWithoutSnapshot.length} calendar(s) without an initial synchronization yet.`
         );
     }
 
     if (diagnostics.subscriptionsWithEmptySnapshot.length > 0) {
         warnings.push(
-            `Hay ${diagnostics.subscriptionsWithEmptySnapshot.length} calendario(s) con snapshot sin eventos parseables.`
+            `There are ${diagnostics.subscriptionsWithEmptySnapshot.length} calendar(s) with snapshots containing no parseable events.`
         );
     }
 
     if (events.length === 0 && diagnostics.subscriptionsWithoutEventsInRange.length > 0) {
         warnings.push(
-            "No se encontraron eventos en el rango seleccionado. Revisa las credenciales y que el nombre de perfil coincida exactamente."
+            "No events were found in the selected range. Check the credentials and that the profile name matches exactly."
         );
     }
 
