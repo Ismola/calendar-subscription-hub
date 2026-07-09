@@ -25,7 +25,13 @@ function getConnection(): IORedis {
 
 export function getSyncQueue(): Queue {
     if (!_queue) {
-        _queue = new Queue(QUEUE_NAME, { connection: getConnection() });
+        _queue = new Queue(QUEUE_NAME, {
+            connection: getConnection(),
+            defaultJobOptions: {
+                removeOnComplete: true,
+                removeOnFail: true,
+            },
+        });
     }
     return _queue;
 }
