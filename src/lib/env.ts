@@ -1,7 +1,3 @@
-import "./load-env";
-
-
-
 export const env = {
     databaseUrl: () =>process.env.REDIS_URL ?? "postgresql://postgres:postgres@localhost:5432/calendar-subscription-hub",
     redisUrl: () => process.env.REDIS_URL ?? "redis://localhost:6379",
