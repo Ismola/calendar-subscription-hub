@@ -23,7 +23,11 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"ismola.ismola-extension-pack"
+				"ismola.ismola-extension-pack",
+				"astro-build.astro-vscode",
+				"bradlc.vscode-tailwindcss",
+				"Prisma.prisma"
+				
 			]
 		}
 	}

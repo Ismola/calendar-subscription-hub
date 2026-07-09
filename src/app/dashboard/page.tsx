@@ -359,7 +359,7 @@ export default function DashboardPage() {
                             key={sub.id}
                             className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4"
                         >
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="font-medium text-zinc-900 dark:text-zinc-50 truncate">
@@ -385,22 +385,24 @@ export default function DashboardPage() {
                                             {sub.lastError}
                                         </p>
                                     )}
-                                    <div className="mt-2 flex items-center gap-2">
-                                        <code className="flex-1 truncate rounded bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300 font-mono">
+                                    <div className="mt-2 flex flex-col items-start md:flex-row md:items-center gap-2">
+                                        <code className="flex-1  rounded bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300 font-mono ">
                                             {sub.icsUrl}
                                         </code>
-                                        <button
-                                            onClick={() => copyUrl(sub.id, sub.icsUrl)}
-                                            className="shrink-0 text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                                        >
-                                            {copiedId === sub.id ? "Copied!" : "Copy"}
-                                        </button>
-                                        <button
-                                            onClick={() => addToCalendar(sub.id, sub.icsUrl)}
-                                            className="shrink-0 text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                                        >
-                                            Add to Calendar
-                                        </button>
+                                        <div className="flex flex-row items-center gap-2 flex-wrap">
+                                            <button
+                                                onClick={() => copyUrl(sub.id, sub.icsUrl)}
+                                                className="shrink-0 text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                                            >
+                                                {copiedId === sub.id ? "Copied!" : "Copy"}
+                                            </button>
+                                            <button
+                                                onClick={() => addToCalendar(sub.id, sub.icsUrl)}
+                                                className="shrink-0 text-xs px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                                            >
+                                                Add to Calendar
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
