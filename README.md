@@ -18,7 +18,11 @@ This is the official open-source frontend and backend for [asismetro-automations
 
 ### Asismetro Automation
 
-https://github.com/user-attachments/assets/4716658d-8547-4c46-87fd-c2d0dfc50b83
+
+
+https://github.com/user-attachments/assets/2dbb07b7-42d4-4f6c-b40b-a19e5f10347a
+
+
 
 ## Tech Stack
 
