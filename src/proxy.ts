@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { env } from "@/lib/env";
+import { isPublicPath } from "@/lib/auth/public-path";
 
 const COOKIE_NAME = "csh_session";
-
-const PUBLIC_PATHS = ["/login", "/register", "/api/auth/login", "/api/auth/register"];
 
 function secret(): Uint8Array {
   return new TextEncoder().encode(env.sessionSecret());
@@ -14,16 +13,8 @@ function secret(): Uint8Array {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Rutas públicas: ICS por GUID, assets estáticos y auth
-  if (
-    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    // ICS guid route: /xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    /^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      pathname
-    )
-  ) {
+  // Rutas públicas: métricas, ICS por GUID, assets estáticos y auth
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
