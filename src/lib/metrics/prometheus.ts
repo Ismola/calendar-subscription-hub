@@ -11,10 +11,19 @@ export interface SyncErrorMetricsRecord {
     createdAt: Date;
 }
 
+export interface SyncAttemptMetricsRecord {
+    provider: string;
+    status: string;
+    message: string | null;
+    startedAt: Date;
+    finishedAt: Date | null;
+}
+
 export interface CalendarMetricsSnapshot {
     providers: string[];
     subscriptions: SubscriptionMetricsRecord[];
     syncErrors: SyncErrorMetricsRecord[];
+    syncAttempts: SyncAttemptMetricsRecord[];
 }
 
 function escapeLabelValue(value: string): string {
@@ -46,8 +55,13 @@ export function renderPrometheusMetrics(
     const subscriptions = new Map<string, number>();
     const overdue = new Map<string, number>();
     const retainedErrors = new Map<string, number>();
+    const retainedTimeouts = new Map<string, number>();
     const lastSuccessfulSync = new Map<string, number>();
     const lastSyncError = new Map<string, number>();
+    const lastSyncAttempt = new Map<
+        string,
+        { startedAt: number; durationSeconds: number; status: string }
+    >();
 
     for (const subscription of snapshot.subscriptions) {
         providers.add(subscription.provider);
@@ -87,6 +101,30 @@ export function renderPrometheusMetrics(
         }
     }
 
+    for (const attempt of snapshot.syncAttempts) {
+        providers.add(attempt.provider);
+
+        if (attempt.message && /timeout|timed out/i.test(attempt.message)) {
+            increment(retainedTimeouts, attempt.provider);
+        }
+
+        if (!attempt.finishedAt) continue;
+
+        const startedAt = attempt.startedAt.getTime();
+        const durationSeconds = Math.max(
+            0,
+            (attempt.finishedAt.getTime() - startedAt) / 1000
+        );
+        const previous = lastSyncAttempt.get(attempt.provider);
+        if (!previous || startedAt > previous.startedAt) {
+            lastSyncAttempt.set(attempt.provider, {
+                startedAt,
+                durationSeconds,
+                status: attempt.status,
+            });
+        }
+    }
+
     const lines = [
         "# HELP calendar_subscription_hub_metrics_collection_success Whether the application collected its database-backed metrics successfully.",
         "# TYPE calendar_subscription_hub_metrics_collection_success gauge",
@@ -109,7 +147,11 @@ export function renderPrometheusMetrics(
         "# HELP calendar_subscription_hub_last_successful_sync_timestamp_seconds Most recent successful sync Unix timestamp per provider.",
         "# TYPE calendar_subscription_hub_last_successful_sync_timestamp_seconds gauge",
         "# HELP calendar_subscription_hub_last_sync_error_timestamp_seconds Most recent sync error Unix timestamp per provider.",
-        "# TYPE calendar_subscription_hub_last_sync_error_timestamp_seconds gauge"
+        "# TYPE calendar_subscription_hub_last_sync_error_timestamp_seconds gauge",
+        "# HELP calendar_subscription_hub_sync_timeouts_retained Sync attempts retained in the application database that ended because of a timeout.",
+        "# TYPE calendar_subscription_hub_sync_timeouts_retained gauge",
+        "# HELP calendar_subscription_hub_last_sync_duration_seconds Duration of the most recently finished sync attempt per provider.",
+        "# TYPE calendar_subscription_hub_last_sync_duration_seconds gauge"
     );
 
     for (const provider of [...providers].sort()) {
@@ -118,8 +160,16 @@ export function renderPrometheusMetrics(
             `calendar_subscription_hub_subscriptions_overdue{${providerLabels}} ${overdue.get(provider) ?? 0}`,
             `calendar_subscription_hub_sync_errors_retained{${providerLabels}} ${retainedErrors.get(provider) ?? 0}`,
             `calendar_subscription_hub_last_successful_sync_timestamp_seconds{${providerLabels}} ${lastSuccessfulSync.get(provider) ?? 0}`,
-            `calendar_subscription_hub_last_sync_error_timestamp_seconds{${providerLabels}} ${lastSyncError.get(provider) ?? 0}`
+            `calendar_subscription_hub_last_sync_error_timestamp_seconds{${providerLabels}} ${lastSyncError.get(provider) ?? 0}`,
+            `calendar_subscription_hub_sync_timeouts_retained{${providerLabels}} ${retainedTimeouts.get(provider) ?? 0}`
         );
+
+        const lastAttempt = lastSyncAttempt.get(provider);
+        if (lastAttempt) {
+            lines.push(
+                `calendar_subscription_hub_last_sync_duration_seconds{${labels({ provider, status: lastAttempt.status })}} ${lastAttempt.durationSeconds}`
+            );
+        }
     }
 
     return `${lines.join("\n")}\n`;

@@ -28,6 +28,22 @@ test("renders aggregated application metrics without subscription identifiers", 
                     createdAt: new Date("2026-08-06T12:30:00Z"),
                 },
             ],
+            syncAttempts: [
+                {
+                    provider: "asismetro",
+                    status: "ERROR",
+                    message: "The operation was aborted due to timeout",
+                    startedAt: new Date("2026-08-06T11:59:00Z"),
+                    finishedAt: new Date("2026-08-06T11:59:30Z"),
+                },
+                {
+                    provider: "asismetro",
+                    status: "SUCCESS",
+                    message: null,
+                    startedAt: new Date("2026-08-06T12:00:00Z"),
+                    finishedAt: new Date("2026-08-06T12:00:15.500Z"),
+                },
+            ],
         },
         new Date("2026-08-06T12:00:00Z")
     );
@@ -56,6 +72,14 @@ test("renders aggregated application metrics without subscription identifiers", 
         metrics,
         /calendar_subscription_hub_last_sync_error_timestamp_seconds\{provider="asismetro"\} 1786019400/
     );
+    assert.match(
+        metrics,
+        /calendar_subscription_hub_sync_timeouts_retained\{provider="asismetro"\} 1/
+    );
+    assert.match(
+        metrics,
+        /calendar_subscription_hub_last_sync_duration_seconds\{provider="asismetro",status="SUCCESS"\} 15\.5/
+    );
     assert.match(metrics, /provider="escaped\\"provider\\\\name"/);
     assert.doesNotMatch(metrics, /subscription_id|user_id|email/);
 });
@@ -65,6 +89,7 @@ test("renders explicit zero values for providers without activity", () => {
         providers: ["empty"],
         subscriptions: [],
         syncErrors: [],
+        syncAttempts: [],
     });
 
     assert.match(
@@ -74,5 +99,9 @@ test("renders explicit zero values for providers without activity", () => {
     assert.match(
         metrics,
         /calendar_subscription_hub_last_sync_error_timestamp_seconds\{provider="empty"\} 0/
+    );
+    assert.match(
+        metrics,
+        /calendar_subscription_hub_sync_timeouts_retained\{provider="empty"\} 0/
     );
 });

@@ -61,6 +61,7 @@ https://github.com/user-attachments/assets/2dbb07b7-42d4-4f6c-b40b-a19e5f10347a
    | `APP_BASE_URL` | Public URL of the app | Yes |
    | `ASISMETRO_API_BASE_URL` | Base URL for Asismetro Automations API | No (default: `https://asismetro-automations.ismola.dev`) |
    | `ASISMETRO_MIN_SYNC_HOURS` | Minimum hours between sync calls to Asismetro | No (default: `4`) |
+   | `ASISMETRO_REQUEST_TIMEOUT_MS` | Maximum duration of an Asismetro API request in milliseconds | No (default: `90000`) |
    | `APP_ENCRYPTION_KEY` | 32-byte hex key for encrypting provider credentials | Yes |
    | `SESSION_SECRET` | Secret used to sign session tokens | Yes |
    | `ASISMETRO_BEARER_TOKEN` | Bearer token for the Asismetro Automations API | Yes |
@@ -156,8 +157,9 @@ aggregate provider/state information; it does not expose users, subscription
 identifiers, calendar names, credentials, or error messages.
 
 Available metrics include current subscriptions by state, overdue
-subscriptions, retained sync errors, and the timestamps of the most recent
-successful sync and sync error for each provider.
+subscriptions, retained sync errors and timeouts, the duration of the latest
+sync attempt, and the timestamps of the most recent successful sync and sync
+error for each provider.
 
 ## Available Scripts
 

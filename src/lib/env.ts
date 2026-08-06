@@ -8,6 +8,10 @@ export const env = {
     encryptionKey: () => process.env.APP_ENCRYPTION_KEY ?? "default_encryption_key",
     sessionSecret: () => process.env.SESSION_SECRET ?? "default_session_secret",
     asismetroBearerToken: () => process.env.ASISMETRO_BEARER_TOKEN ?? "default_bearer_token",
+    asismetroRequestTimeoutMs: () => {
+        const configured = Number(process.env.ASISMETRO_REQUEST_TIMEOUT_MS);
+        return Number.isFinite(configured) && configured > 0 ? configured : 90_000;
+    },
     defaultRefreshMinutes: () => Number(process.env.DEFAULT_REFRESH_MINUTES) || 360,
     asismetroMinSyncHours: () => Number(process.env.ASISMETRO_MIN_SYNC_HOURS) || 4,
 };

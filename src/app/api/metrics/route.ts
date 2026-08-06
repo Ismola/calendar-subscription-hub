@@ -9,7 +9,7 @@ export async function GET() {
     const now = new Date();
 
     try {
-        const [providers, subscriptions, syncErrors] = await prisma.$transaction([
+        const [providers, subscriptions, syncErrors, syncAttempts] = await prisma.$transaction([
             prisma.providerDefinition.findMany({
                 select: { key: true },
             }),
@@ -37,6 +37,21 @@ export async function GET() {
                     },
                 },
             }),
+            prisma.syncAttempt.findMany({
+                select: {
+                    status: true,
+                    message: true,
+                    startedAt: true,
+                    finishedAt: true,
+                    subscription: {
+                        select: {
+                            providerDefinition: {
+                                select: { key: true },
+                            },
+                        },
+                    },
+                },
+            }),
         ]);
 
         return new Response(
@@ -53,6 +68,13 @@ export async function GET() {
                     syncErrors: syncErrors.map((error) => ({
                         provider: error.subscription.providerDefinition.key,
                         createdAt: error.createdAt,
+                    })),
+                    syncAttempts: syncAttempts.map((attempt) => ({
+                        provider: attempt.subscription.providerDefinition.key,
+                        status: attempt.status,
+                        message: attempt.message,
+                        startedAt: attempt.startedAt,
+                        finishedAt: attempt.finishedAt,
                     })),
                 },
                 now

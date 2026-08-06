@@ -379,7 +379,7 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
                 username: parsedConfig.username,
                 password: parsedConfig.password,
             }),
-            signal: AbortSignal.timeout(30000),
+            signal: AbortSignal.timeout(env.asismetroRequestTimeoutMs()),
         });
 
         const responseText = await response.clone().text();
