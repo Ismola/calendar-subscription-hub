@@ -13,6 +13,7 @@ This is the official open-source frontend and backend for [asismetro-automations
 - **Background sync** — a BullMQ worker refreshes subscriptions on a configurable schedule
 - **Shareable iCal URLs** — each subscription generates a stable public URL that any calendar client can poll
 - **Session-based auth** — register, log in, and manage subscriptions through a dashboard
+- **Prometheus metrics** — aggregate subscription and sync health at `/api/metrics`
 
 ## Demo
 
@@ -146,6 +147,17 @@ src/
    import { myProvider } from "./my-provider";
    registry.push(myProvider);
    ```
+
+## Monitoring
+
+`GET /api/metrics` exposes Prometheus text format metrics derived from the
+database shared by the web and worker processes. The endpoint only publishes
+aggregate provider/state information; it does not expose users, subscription
+identifiers, calendar names, credentials, or error messages.
+
+Available metrics include current subscriptions by state, overdue
+subscriptions, retained sync errors, and the timestamps of the most recent
+successful sync and sync error for each provider.
 
 ## Available Scripts
 
