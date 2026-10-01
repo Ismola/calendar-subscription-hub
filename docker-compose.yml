@@ -9,7 +9,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      STAGE: ${STAGE:-production}
+      STAGE: ${STAGE:-staging}
       VALID_TOKEN: ${ASISMETRO_BEARER_TOKEN:-sample}
     healthcheck:
       test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/')" ]
