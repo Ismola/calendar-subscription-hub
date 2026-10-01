@@ -31,7 +31,33 @@ function unescapeIcsText(value: string): string {
         .replace(/\\\\/g, "\\");
 }
 
-function parseIcsDate(value: string, valueType: string | null): Date | null {
+function dateInTimezone(parts: number[], timezone: string): Date {
+    const [year, month, day, hour, minute, second] = parts;
+    const localTimestamp = Date.UTC(year, month - 1, day, hour, minute, second);
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+        timeZone: timezone,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hourCycle: "h23",
+    });
+    let timestamp = localTimestamp;
+    // Resolve the timezone offset at the event date, including daylight saving time.
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const fields = Object.fromEntries(
+            formatter.formatToParts(new Date(timestamp)).map(({ type, value }) => [type, value])
+        );
+        const representedTimestamp = Date.UTC(
+            Number(fields.year), Number(fields.month) - 1, Number(fields.day),
+            Number(fields.hour), Number(fields.minute), Number(fields.second)
+        );
+        const adjustment = localTimestamp - representedTimestamp;
+        if (adjustment === 0) break;
+        timestamp += adjustment;
+    }
+    return new Date(timestamp);
+}
+
+function parseIcsDate(value: string, valueType: string | null, timezone?: string | null): Date | null {
     const trimmed = value.trim();
     if (!trimmed) return null;
 
@@ -54,6 +80,13 @@ function parseIcsDate(value: string, valueType: string | null): Date | null {
     const localMatch = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/.exec(trimmed);
     if (localMatch) {
         const [, y, m, d, hh, mm, ss] = localMatch;
+        if (timezone) {
+            try {
+                return dateInTimezone([y, m, d, hh, mm, ss].map(Number), timezone);
+            } catch {
+                return null;
+            }
+        }
         return new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), Number(ss));
     }
 
@@ -66,6 +99,8 @@ interface RawEventValues {
     description?: string;
     dtstart?: string;
     dtstartValueType?: string | null;
+    dtstartTimezone?: string | null;
+    dtendTimezone?: string | null;
     dtend?: string;
     dtendValueType?: string | null;
 }
@@ -97,11 +132,11 @@ function parseProperty(line: string): {
 function toParsedEvent(raw: RawEventValues): ParsedIcsEvent | null {
     if (!raw.dtstart) return null;
 
-    const startsAt = parseIcsDate(raw.dtstart, raw.dtstartValueType ?? null);
+    const startsAt = parseIcsDate(raw.dtstart, raw.dtstartValueType ?? null, raw.dtstartTimezone);
     if (!startsAt) return null;
 
     const endsAt = raw.dtend
-        ? parseIcsDate(raw.dtend, raw.dtendValueType ?? raw.dtstartValueType ?? null)
+        ? parseIcsDate(raw.dtend, raw.dtendValueType ?? raw.dtstartValueType ?? null, raw.dtendTimezone)
         : null;
 
     return {
@@ -149,10 +184,12 @@ export function parseIcsEvents(icsBody: string): ParsedIcsEvent[] {
         if (prop.name === "DTSTART") {
             rawEvent.dtstart = prop.value;
             rawEvent.dtstartValueType = prop.params.VALUE ?? null;
+            rawEvent.dtstartTimezone = prop.params.TZID ?? null;
         }
         if (prop.name === "DTEND") {
             rawEvent.dtend = prop.value;
             rawEvent.dtendValueType = prop.params.VALUE ?? null;
+            rawEvent.dtendTimezone = prop.params.TZID ?? null;
         }
     }
 
