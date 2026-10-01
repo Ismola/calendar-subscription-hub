@@ -1,332 +1,126 @@
-import { createHash } from "crypto";
 import { z } from "zod";
 import { env } from "../env";
 import type { ProviderDefinition } from "./types";
 
-
-// DOCUMENTATION https://github.com/Ismola/asismetro-automations/blob/main/API_REFERENCE.md
-
-const ASISMETRO_CALENDAR_URL =
-    `${env.asismetroApiBaseUrl().replace(/\/$/, "")}/get-calendar`;
-const CALENDAR_TIMEZONE = "Europe/Madrid";
-
 const configSchema = z.object({
     username: z.string().trim().min(1, "El usuario de Asismetro es obligatorio"),
-    password: z
-        .string()
-        .trim()
-        .min(1, "La contraseña de Asismetro es obligatoria"),
-    profileName: z
-        .string()
-        .trim()
-        .min(1, "El nombre mostrado en Asismetro es obligatorio"),
+    password: z.string().min(1, "La contraseña de Asismetro es obligatoria"),
+});
+
+const eventSchema = z.object({
+    uid: z.string().min(1),
+    start: z.iso.datetime({ local: true, offset: true }),
+    end: z.iso.datetime({ local: true, offset: true }).nullable(),
+    all_day: z.boolean(),
+    summary: z.string(),
+    description: z.string().nullable(),
+    location: z.string().nullable(),
+    status: z.enum(["CONFIRMED", "TENTATIVE", "CANCELLED"]),
+});
+
+const calendarSchema = z.object({
+    name: z.string(),
+    timezone: z.string().refine((value) => {
+        try {
+            new Intl.DateTimeFormat("en", { timeZone: value });
+            return !/[\r\n;:]/.test(value);
+        } catch {
+            return false;
+        }
+    }, "Zona horaria no valida"),
+    events: z.array(eventSchema),
 });
 
 const apiResponseSchema = z.object({
-    status: z.string(),
+    status: z.literal("OK"),
     message: z.object({
-        actual_calendar: z
-            .object({
-                sections: z.array(
-                    z.object({
-                        slots: z.array(
-                            z.object({
-                                time_range: z.string(),
-                                entries: z.array(
-                                    z.object({
-                                        date: z.string().nullable(),
-                                        assignees: z
-                                            .array(
-                                                z.object({
-                                                    name: z.string().nullable(),
-                                                })
-                                            )
-                                            .default([]),
-                                    })
-                                ),
-                            })
-                        ),
-                    })
-                ),
-            })
-            .nullable()
-            .optional(),
-        next_calendar: z
-            .object({
-                sections: z.array(
-                    z.object({
-                        slots: z.array(
-                            z.object({
-                                time_range: z.string(),
-                                entries: z.array(
-                                    z.object({
-                                        date: z.string().nullable(),
-                                        assignees: z
-                                            .array(
-                                                z.object({
-                                                    name: z.string().nullable(),
-                                                })
-                                            )
-                                            .default([]),
-                                    })
-                                ),
-                            })
-                        ),
-                    })
-                ),
-            })
-            .nullable()
-            .optional(),
+        actual_calendar: calendarSchema.nullable(),
+        next_calendar: calendarSchema.nullable(),
     }),
 });
 
-const monthNameToIndex: Record<string, number> = {
-    ENERO: 0,
-    FEBRERO: 1,
-    MARZO: 2,
-    ABRIL: 3,
-    MAYO: 4,
-    JUNIO: 5,
-    JULIO: 6,
-    AGOSTO: 7,
-    SEPTIEMBRE: 8,
-    SETIEMBRE: 8,
-    OCTUBRE: 9,
-    NOVIEMBRE: 10,
-    DICIEMBRE: 11,
-};
-
-interface LocalDateTimeParts {
-    year: number;
-    month: number;
-    day: number;
-    hour: number;
-    minute: number;
-}
-
-interface ShiftEvent {
-    start: LocalDateTimeParts;
-    end: LocalDateTimeParts;
-    summary: string;
-    description: string;
-    uid: string;
-}
-
-function normalizeWhitespace(value: string): string {
-    return value.trim().replace(/\s+/g, " ");
-}
-
-function normalizeMonthName(value: string): string {
-    return value
-        .trim()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toUpperCase();
-}
-
-function namesMatch(left: string, right: string): boolean {
-    return (
-        normalizeWhitespace(left).localeCompare(normalizeWhitespace(right), "es", {
-            sensitivity: "base",
-        }) === 0
-    );
-}
-
-function parseDateLabel(
-    dateLabel: string,
-    fallbackYear: number,
-    fallbackMonth: number
-): { year: number; month: number; day: number } {
-    const match = dateLabel.match(/^(\d{1,2})\s+(.+)$/);
-    if (!match) {
-        throw new Error(`Fecha de turno no valida: ${dateLabel}`);
-    }
-
-    const day = Number.parseInt(match[1], 10);
-    const parsedMonth = monthNameToIndex[normalizeMonthName(match[2])];
-    const month = parsedMonth ?? fallbackMonth;
-
-    let year = fallbackYear;
-    if (month === 0 && fallbackMonth === 11) {
-        year += 1;
-    } else if (month === 11 && fallbackMonth === 0) {
-        year -= 1;
-    }
-
-    return { year, month, day };
-}
-
-function parseTimeRange(timeRange: string): {
-    startHour: number;
-    startMinute: number;
-    endHour: number;
-    endMinute: number;
-} {
-    const match = timeRange.match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/);
-    if (!match) {
-        throw new Error(`Rango horario no valido: ${timeRange}`);
-    }
-
-    return {
-        startHour: Number.parseInt(match[1], 10),
-        startMinute: Number.parseInt(match[2], 10),
-        endHour: Number.parseInt(match[3], 10),
-        endMinute: Number.parseInt(match[4], 10),
-    };
-}
-
-function pad(value: number): string {
-    return value.toString().padStart(2, "0");
-}
-
-function formatLocalDateTime(parts: LocalDateTimeParts): string {
-    return `${parts.year}${pad(parts.month + 1)}${pad(parts.day)}T${pad(parts.hour)}${pad(parts.minute)}00`;
-}
-
-function formatUtcTimestamp(date: Date): string {
-    return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}T${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}${pad(date.getUTCSeconds())}Z`;
-}
+type Calendar = z.infer<typeof calendarSchema>;
 
 function escapeIcsText(value: string): string {
     return value
         .replace(/\\/g, "\\\\")
         .replace(/;/g, "\\;")
         .replace(/,/g, "\\,")
-        .replace(/\r?\n/g, "\\n");
+        .replace(/\r\n|\r|\n/g, "\\n");
 }
 
-function foldIcsLine(line: string): string[] {
-    const maxLength = 75;
-    if (line.length <= maxLength) {
-        return [line];
+// RFC 5545 limits each physical line to 75 octets, including continuation spaces.
+function foldIcsLine(line: string): string {
+    const lines: string[] = [];
+    let chunk = "";
+    let bytes = 0;
+    for (const character of line) {
+        const size = Buffer.byteLength(character, "utf8");
+        if (bytes + size > 75) {
+            lines.push(chunk);
+            chunk = " ";
+            bytes = 1;
+        }
+        chunk += character;
+        bytes += size;
     }
-
-    const chunks: string[] = [];
-    let remaining = line;
-    while (remaining.length > maxLength) {
-        chunks.push(remaining.slice(0, maxLength));
-        remaining = ` ${remaining.slice(maxLength)}`;
-    }
-    chunks.push(remaining);
-    return chunks;
+    lines.push(chunk);
+    return lines.join("\r\n");
 }
 
-function buildIcsBody(profileName: string, events: ShiftEvent[]): string {
-    const dtStamp = formatUtcTimestamp(new Date());
+function formatDateProperty(
+    property: string,
+    value: string,
+    allDay: boolean,
+    timezone: string
+): string {
+    if (allDay) {
+        return `${property};VALUE=DATE:${value.slice(0, 10).replace(/-/g, "")}`;
+    }
+    if (/(Z|[+-]\d{2}:\d{2})$/.test(value)) {
+        return `${property}:${new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}`;
+    }
+    // Local timestamps belong to the timezone supplied by Asismetro, not the server.
+    const timestamp = value.slice(0, 19).replace(/[-:]/g, "");
+    return `${property};TZID=${timezone}:${timestamp.length === 13 ? `${timestamp}00` : timestamp}`;
+}
+
+function buildIcsBody(calendars: Calendar[]): string {
+    const names = [...new Set(calendars.map((calendar) => calendar.name))];
     const lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
         "PRODID:-//Calendar Subscription Hub//Asismetro Automations//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
-        `X-WR-CALNAME:${escapeIcsText(`Asismetro - ${profileName}`)}`,
-        `X-WR-TIMEZONE:${CALENDAR_TIMEZONE}`,
+        `X-WR-CALNAME:${escapeIcsText(names.join(" / ") || "Asismetro")}`,
     ];
-
-    for (const event of events) {
-        lines.push("BEGIN:VEVENT");
-        lines.push(`UID:${event.uid}`);
-        lines.push(`DTSTAMP:${dtStamp}`);
-        lines.push(`DTSTART;TZID=${CALENDAR_TIMEZONE}:${formatLocalDateTime(event.start)}`);
-        lines.push(`DTEND;TZID=${CALENDAR_TIMEZONE}:${formatLocalDateTime(event.end)}`);
-        lines.push(`SUMMARY:${escapeIcsText(event.summary)}`);
-        lines.push(`DESCRIPTION:${escapeIcsText(event.description)}`);
-        lines.push("STATUS:CONFIRMED");
-        lines.push("END:VEVENT");
-    }
-
-    lines.push("END:VCALENDAR");
-
-    return lines.flatMap(foldIcsLine).join("\r\n");
-}
-
-function buildEventUid(
-    profileName: string,
-    start: LocalDateTimeParts,
-    end: LocalDateTimeParts
-): string {
-    const hash = createHash("sha256")
-        .update(
-            [
-                profileName,
-                formatLocalDateTime(start),
-                formatLocalDateTime(end),
-            ].join("|")
-        )
-        .digest("hex");
-
-    return `${hash}@asismetro-automations.calendar-subscription-hub`;
-}
-
-function extractEvents(
-    calendar: z.infer<typeof apiResponseSchema>['message']['actual_calendar'],
-    baseDate: Date,
-    profileName: string
-): ShiftEvent[] {
-    if (!calendar) {
-        return [];
-    }
-
-    const events = new Map<string, ShiftEvent>();
-
-    for (const section of calendar.sections) {
-        for (const slot of section.slots) {
-            const timeRange = parseTimeRange(slot.time_range);
-            for (const entry of slot.entries) {
-                if (!entry.date) {
-                    continue;
-                }
-
-                const isAssignedToProfile = entry.assignees.some(
-                    (assignee) =>
-                        assignee.name !== null &&
-                        namesMatch(assignee.name, profileName)
-                );
-                if (!isAssignedToProfile) {
-                    continue;
-                }
-
-                const date = parseDateLabel(
-                    entry.date,
-                    baseDate.getFullYear(),
-                    baseDate.getMonth()
-                );
-
-                const start = {
-                    ...date,
-                    hour: timeRange.startHour,
-                    minute: timeRange.startMinute,
-                };
-                const end = {
-                    ...date,
-                    hour: timeRange.endHour,
-                    minute: timeRange.endMinute,
-                };
-                const uid = buildEventUid(profileName, start, end);
-
-                events.set(uid, {
-                    start,
-                    end,
-                    uid,
-                    summary: `Turno ${slot.time_range}`,
-                    description: `Turno de ${profileName} sincronizado desde Asismetro Automations.`,
-                });
+    if (calendars[0]) lines.push(`X-WR-TIMEZONE:${calendars[0].timezone}`);
+    const dtstamp = formatDateProperty("DTSTAMP", new Date().toISOString(), false, "UTC");
+    const seen = new Set<string>();
+    for (const calendar of calendars) {
+        for (const event of calendar.events) {
+            if (seen.has(event.uid)) continue;
+            seen.add(event.uid);
+            lines.push("BEGIN:VEVENT", `UID:${escapeIcsText(event.uid)}`, dtstamp);
+            lines.push(formatDateProperty("DTSTART", event.start, event.all_day, calendar.timezone));
+            if (event.end !== null) {
+                lines.push(formatDateProperty("DTEND", event.end, event.all_day, calendar.timezone));
             }
+            lines.push(`SUMMARY:${escapeIcsText(event.summary)}`);
+            if (event.description !== null) lines.push(`DESCRIPTION:${escapeIcsText(event.description)}`);
+            if (event.location !== null) lines.push(`LOCATION:${escapeIcsText(event.location)}`);
+            lines.push(`STATUS:${event.status}`, "END:VEVENT");
         }
     }
-
-    return Array.from(events.values()).sort((left, right) => {
-        const leftKey = formatLocalDateTime(left.start);
-        const rightKey = formatLocalDateTime(right.start);
-        return leftKey.localeCompare(rightKey);
-    });
+    lines.push("END:VCALENDAR");
+    return `${lines.map(foldIcsLine).join("\r\n")}\r\n`;
 }
 
 export const asismetroAutomationsProvider: ProviderDefinition = {
     key: "asismetro-automations",
     name: "Asismetro Automations",
-    description:
-        "Sincroniza los turnos publicados en Asismetro para una persona concreta.",
+    description: "Sincroniza los turnos publicados en Asismetro para tu usuario.",
     enabled: true,
     defaultRefreshMinutes: env.defaultRefreshMinutes(),
     minSyncIntervalMinutes: env.asismetroMinSyncHours() * 60,
@@ -348,76 +142,33 @@ export const asismetroAutomationsProvider: ProviderDefinition = {
             secret: true,
             helpText: "Se cifra en la base de datos antes de guardarse.",
         },
-        {
-            key: "profileName",
-            label: "Nombre mostrado en Asismetro",
-            type: "text",
-            required: true,
-            secret: false,
-            placeholder: "Ismael Treviño",
-            helpText:
-                "Debe coincidir con el nombre que aparece asignado en los turnos.",
-        },
     ],
     validateConfig(config) {
         configSchema.parse(config);
     },
     async sync(config, secretConfig) {
-        const parsedConfig = configSchema.parse({
-            ...config,
-            ...secretConfig,
-        });
-
-        const response = await fetch(ASISMETRO_CALENDAR_URL, {
+        const parsedConfig = configSchema.parse({ ...config, ...secretConfig });
+        const response = await fetch(`${env.asismetroApiBaseUrl().replace(/\/$/, "")}/get-calendar`, {
             method: "POST",
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${env.asismetroBearerToken()}`,
             },
-            body: JSON.stringify({
-                username: parsedConfig.username,
-                password: parsedConfig.password,
-            }),
+            body: JSON.stringify(parsedConfig),
             signal: AbortSignal.timeout(env.asismetroRequestTimeoutMs()),
         });
-
-        const responseText = await response.clone().text();
-        if (process.env.NODE_ENV !== "production") {
-            console.log("[asismetro] raw response:", responseText);
-        }
-
-
         if (!response.ok) {
-            throw new Error(
-                `Asismetro devolvio ${response.status}: ${responseText.slice(0, 300)}`
-            );
+            throw new Error(`Asismetro devolvio ${response.status}`);
         }
-
-        const rawResponse: unknown = JSON.parse(responseText);
-        const parsedResponse = apiResponseSchema.parse(rawResponse);
-        if (parsedResponse.status.toUpperCase() !== "OK") {
+        const parsedResponse = apiResponseSchema.safeParse(await response.json());
+        if (!parsedResponse.success) {
             throw new Error("Asismetro devolvio una respuesta no valida");
         }
-
-        const now = new Date();
-        const actualMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        const events = [
-            ...extractEvents(
-                parsedResponse.message.actual_calendar,
-                actualMonth,
-                parsedConfig.profileName
-            ),
-            ...extractEvents(
-                parsedResponse.message.next_calendar,
-                nextMonth,
-                parsedConfig.profileName
-            ),
-        ];
-
-        return {
-            icsBody: buildIcsBody(parsedConfig.profileName, events),
-        };
+        const calendars = [
+            parsedResponse.data.message.actual_calendar,
+            parsedResponse.data.message.next_calendar,
+        ].filter((calendar): calendar is Calendar => calendar !== null);
+        return { icsBody: buildIcsBody(calendars) };
     },
 };

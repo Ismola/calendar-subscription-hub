@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
 
     if (events.length === 0 && diagnostics.subscriptionsWithoutEventsInRange.length > 0) {
         warnings.push(
-            "No events were found in the selected range. Check the credentials and that the profile name matches exactly."
+            "No events were found in the selected range. Check the selected dates and the provider credentials."
         );
     }
 

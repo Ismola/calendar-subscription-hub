@@ -15,6 +15,16 @@ This is the official open-source frontend and backend for [asismetro-automations
 - **Session-based auth** — register, log in, and manage subscriptions through a dashboard
 - **Prometheus metrics** — aggregate subscription and sync health at `/api/metrics`
 
+## Asismetro configuration
+
+Subscriptions only require the Asismetro username and password, encrypted at rest.
+The API returns calendars for that account, so no display name is needed. Existing
+subscriptions can keep their old configuration; the display name is ignored.
+
+`POST /get-calendar` must return `actual_calendar` and `next_calendar` (nullable),
+each with `name`, `timezone`, and `events`. Events are converted to ICS using the
+API's UID, start/end dates, summary, description, location, status and all-day flag.
+
 ## Demo
 
 ### Asismetro Automation
